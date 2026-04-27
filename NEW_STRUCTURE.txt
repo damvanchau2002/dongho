@@ -1,0 +1,247 @@
+📁 NEW CODE STRUCTURE - LEOPARD STORE
+
+═══════════════════════════════════════════════════════════════════════════════
+
+Website/
+│
+├── 📋 config/                          (Configuration files)
+│   ├── database.php                    Database connection
+│   ├── autoload.php                    PSR-4 Autoloader
+│   └── constants.php                   Global constants
+│
+├── 🌐 public/                          (Web accessible - static files)
+│   ├── index.php                       ⭐ MAIN ENTRY POINT
+│   ├── .htaccess                       URL rewriting
+│   │
+│   ├── css/
+│   │   ├── bootstrap.css
+│   │   ├── bootstrap.min.css
+│   │   └── custom/
+│   │       ├── home.css
+│   │       ├── product.css
+│   │       └── ...
+│   │
+│   ├── js/
+│   │   ├── bootstrap.js
+│   │   ├── jquery.js
+│   │   └── custom/
+│   │       ├── script.js
+│   │       └── ...
+│   │
+│   └── images/
+│       ├── logo/
+│       ├── products/
+│       └── ...
+│
+├── 💻 src/                             (Application source code)
+│   │
+│   ├── Controllers/
+│   │   ├── HomeController.php          Home/Dashboard
+│   │   ├── ProductController.php       Product listing & detail
+│   │   ├── CartController.php          Shopping cart
+│   │   ├── CheckoutController.php      Checkout flow
+│   │   ├── AuthController.php          Login/Signup
+│   │   ├── UserController.php          User profile
+│   │   ├── CommentController.php       Comments
+│   │   ├── OrderController.php         Order history
+│   │   ├── AdminController.php         Admin panel
+│   │   └── SearchController.php        Search
+│   │
+│   ├── Models/
+│   │   ├── BaseModel.php               Base class for all models
+│   │   ├── User.php                    User data access
+│   │   ├── Product.php                 Product data access
+│   │   ├── Cart.php                    Cart data access
+│   │   ├── Order.php                   Order data access
+│   │   ├── Comment.php                 Comment data access
+│   │   └── Category.php                Category data access
+│   │
+│   ├── Views/
+│   │   ├── layouts/
+│   │   │   ├── header.php              Header (navigation)
+│   │   │   ├── footer.php              Footer
+│   │   │   ├── navbar.php              Navigation bar
+│   │   │   └── sidebar.php             Sidebar
+│   │   │
+│   │   ├── home/
+│   │   │   └── index.php               Home page
+│   │   │
+│   │   ├── product/
+│   │   │   ├── index.php               Product list
+│   │   │   ├── detail.php              Product detail
+│   │   │   └── search.php              Search results
+│   │   │
+│   │   ├── cart/
+│   │   │   └── index.php               Shopping cart
+│   │   │
+│   │   ├── checkout/
+│   │   │   ├── index.php               Checkout
+│   │   │   └── order-detail.php        Order confirmation
+│   │   │
+│   │   ├── user/
+│   │   │   ├── profile.php             User profile
+│   │   │   ├── login.php               Login form
+│   │   │   ├── signup.php              Signup form
+│   │   │   ├── reset-password.php      Password reset
+│   │   │   └── account.php             Account management
+│   │   │
+│   │   ├── admin/
+│   │   │   ├── dashboard.php           Admin dashboard
+│   │   │   ├── products.php            Product management
+│   │   │   ├── orders.php              Order management
+│   │   │   ├── users.php               User management
+│   │   │   └── settings.php            Settings
+│   │   │
+│   │   ├── 404.php                     Not found page
+│   │   └── 500.php                     Error page
+│   │
+│   ├── Helpers/
+│   │   ├── SecurityHelper.php          Password hash, validation, sanitize
+│   │   ├── Logger.php                  Error logging
+│   │   ├── ProtectionHelper.php        CSRF tokens, rate limiting
+│   │   ├── ValidationHelper.php        Input validation rules
+│   │   ├── FormHelper.php              Form utilities
+│   │   └── StringHelper.php            String utilities
+│   │
+│   ├── Middleware/
+│   │   ├── AuthMiddleware.php          Authentication check
+│   │   ├── AdminMiddleware.php         Admin role check
+│   │   └── ErrorHandler.php            Error handling
+│   │
+│   └── Database/
+│       ├── Connection.php              Database connection
+│       └── Query.php                   Query builder
+│
+├── 📝 logs/                            (Application logs)
+│   ├── app-2026-04-27.log              Application logs
+│   ├── error-2026-04-27.log            Error logs
+│   └── access-2026-04-27.log           Access logs
+│
+├── 📦 storage/                         (User uploads & cache)
+│   ├── uploads/
+│   │   ├── products/                   Product images
+│   │   └── avatars/                    User avatars
+│   └── cache/                          Cached data
+│
+├── 🧪 tests/                          (Unit tests)
+│   ├── Unit/
+│   │   └── UserTest.php
+│   └── Feature/
+│       └── ProductTest.php
+│
+├── vendor/                             (Composer packages)
+│   └── ...
+│
+├── 🔐 .env                            (Environment variables - DON'T COMMIT)
+│   DB_HOST=localhost
+│   DB_USER=root
+│   DB_PASS=
+│   DB_NAME=leopard_store
+│
+├── 📖 .env.example                    (Template for .env)
+├── 🚫 .gitignore                      (Git ignore patterns)
+├── 📚 README.md                       (Project documentation)
+├── 📋 composer.json                   (Dependencies)
+│
+└── 📄 DOCUMENTATION/
+    ├── STRUCTURE_GUIDE.md              Structure overview
+    ├── REORGANIZE_GUIDE.md             Migration guide
+    ├── SECURITY_UPGRADE.md             Security improvements
+    ├── EXAMPLES_USAGE.md               Code examples
+    └── ...
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📊 COMPARISON TABLE
+
+┌─────────────────────┬──────────────────────┬──────────────────────┐
+│      ASPECT         │      BEFORE          │        AFTER         │
+├─────────────────────┼──────────────────────┼──────────────────────┤
+│ Controllers         │ 2 locations          │ src/Controllers/     │
+│ Models              │ 2 locations          │ src/Models/          │
+│ Views               │ 2 locations          │ src/Views/           │
+│ Config              │ app/ folder          │ config/ folder       │
+│ Helpers             │ helpers/ (root)      │ src/Helpers/         │
+│ Static files        │ Scattered            │ public/              │
+│ Entry point         │ Unclear              │ public/index.php     │
+│ Organization        │ ⭐⭐ Chaotic          │ ⭐⭐⭐⭐⭐ Professional   │
+│ Maintainability     │ 🔴 Hard              │ 🟢 Easy              │
+│ Scalability         │ 🔴 Limited           │ 🟢 Good              │
+└─────────────────────┴──────────────────────┴──────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🚀 HOW TO IMPLEMENT
+
+Step 1: Run organizer script
+   php organizer.php
+
+Step 2: Update index.php
+   require 'config/autoload.php';
+   use App\Controllers\HomeController;
+
+Step 3: Test website
+   http://localhost/Website
+
+Step 4: Delete old folders (when ready)
+   rm -r app/controller app/model app/views controllers models views
+
+═══════════════════════════════════════════════════════════════════════════════
+
+✨ BENEFITS
+
+✅ One place for each type of file (DRY)
+✅ Easy to navigate and find things
+✅ Professional structure (industry standard)
+✅ Scalable for future growth
+✅ Clean separation of concerns
+✅ Easy to maintain and update
+✅ Ready for framework migration
+✅ Compatible with PSR-4 autoloading
+✅ Easier to test
+✅ Better for team collaboration
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📝 KEY FILES
+
+Entry Point:
+   public/index.php
+
+Autoloader:
+   config/autoload.php
+
+Database Config:
+   config/database.php
+
+Constants:
+   config/constants.php
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🔗 USE WITH NEW STRUCTURE
+
+// OLD (scattered imports)
+require 'app/controller/login_controller.php';
+require 'models/BaseModel.php';
+require 'helpers/SecurityHelper.php';
+include 'views/home.php';
+
+// NEW (clean & organized)
+require 'config/autoload.php';
+use App\Controllers\AuthController;
+use App\Models\BaseModel;
+$auth = new AuthController();
+include VIEW_PATH . '/home/index.php';
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📞 QUESTIONS?
+
+Check documentation:
+- STRUCTURE_GUIDE.md (overview)
+- REORGANIZE_GUIDE.md (how-to)
+- SECURITY_UPGRADE.md (security)
+- EXAMPLES_USAGE.md (code examples)
+
+═══════════════════════════════════════════════════════════════════════════════

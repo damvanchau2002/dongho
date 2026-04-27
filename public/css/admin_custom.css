@@ -1,0 +1,203 @@
+/* Admin Layout Styles */
+body {
+    background-color: #f4f7f6;
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+.admin-navbar {
+    background-color: #0f4c81;
+    color: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    padding: 10px 20px;
+    margin-bottom: 30px;
+}
+.admin-navbar .navbar-brand {
+    color: #d4af37 !important;
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+.admin-navbar .nav-link {
+    color: white !important;
+    font-weight: 500;
+    margin-right: 15px;
+}
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.user-name {
+    color: white;
+    font-weight: 500;
+}
+.btn-logout {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.5);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 30px;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+.btn-logout:hover {
+    background: #d4af37;
+    border-color: #d4af37;
+    color: white;
+}
+
+/* Sidebar Styles */
+.admin-sidebar {
+    background: white;
+    border-radius: 12px;
+    padding: 20px 10px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    height: auto;
+}
+.sidebar-section {
+    margin-bottom: 15px;
+}
+.sidebar-title {
+    color: #adb5bd;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    padding: 0 12px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.admin-sidebar .nav-link {
+    color: #495057;
+    font-weight: 500;
+    border-radius: 8px;
+    margin-bottom: 2px;
+    padding: 8px 12px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    text-decoration: none;
+}
+.admin-sidebar .nav-link i {
+    width: 20px;
+    text-align: center;
+    font-size: 1rem;
+    color: #6c757d;
+}
+.admin-sidebar .nav-link:hover, .admin-sidebar .nav-link.active {
+    background: rgba(15, 76, 129, 0.08);
+    color: #0f4c81;
+}
+.admin-sidebar .nav-link:hover i, .admin-sidebar .nav-link.active i {
+    color: #0f4c81;
+}
+
+/* Accordion Sidebar */
+.sidebar-section .nav-link.has-submenu {
+    position: relative;
+    cursor: pointer;
+}
+.sidebar-section .nav-link.has-submenu::after {
+    content: '\f107';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    right: 15px;
+    transition: transform 0.3s;
+}
+.sidebar-section.active .nav-link.has-submenu::after {
+    transform: rotate(-180deg);
+}
+.brand-list {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    padding-left: 10px;
+    background: #fdfdfd;
+    border-radius: 8px;
+    margin: 0 5px;
+}
+.sidebar-section.active .brand-list {
+    max-height: 1000px; /* Large enough for many categories */
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+}
+.sidebar-section.active .brand-list .nav-link {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+}
+
+.admin-sidebar .btn--add {
+    background: #d4af37;
+    color: white !important;
+    text-align: center;
+    margin: 10px 12px;
+    border: none;
+    font-weight: 600;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(212, 175, 55, 0.3);
+    display: block;
+    padding: 8px;
+    font-size: 0.85rem;
+    text-decoration: none;
+}
+.admin-sidebar .btn--add.active {
+    background: #b5952f;
+}
+
+/* Content Styles */
+.admin-content {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+}
+.section-title {
+    color: #0f4c81;
+    font-weight: 700;
+    margin-bottom: 25px;
+    font-size: 1.5rem;
+    border-left: 4px solid #d4af37;
+    padding-left: 10px;
+}
+
+/* Form Styles */
+.form-label {
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 5px;
+}
+.form-control {
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    padding: 10px 15px;
+    transition: all 0.3s;
+}
+.form-control:focus {
+    border-color: #0f4c81;
+    box-shadow: 0 0 0 0.2rem rgba(15, 76, 129, 0.15);
+}
+.btn-primary {
+    background: linear-gradient(135deg, #0f4c81 0%, #1a6bb5 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 25px;
+    font-weight: 600;
+    color: white;
+}
+.btn-secondary {
+    background: #6c757d;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 25px;
+    color: white;
+    text-decoration: none;
+    display: inline-block;
+}
