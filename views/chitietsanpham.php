@@ -119,10 +119,17 @@ $comments = $commentModel->getCommentsByProductId($id_sp);
             <h1 class="pd-title"><?= htmlspecialchars($proInfo['ten_sp']) ?></h1>
 
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;font-size:14px">
-                <span style="color:#fbbf24;font-size:16px">★★★★☆</span>
+                <span style="color:#fbbf24;font-size:16px">
+                    <?php
+                    $full = floor($stats['average']); $half = ($stats['average']-$full)>=0.5?1:0;
+                    for($i=0;$i<$full;$i++) echo '★';
+                    if($half) echo '½';
+                    for($i=$full+$half;$i<5;$i++) echo '☆';
+                    ?>
+                </span>
                 <span style="color:#94a3b8"><?= $stats['total'] ?> đánh giá</span>
                 <span style="color:#e2e8f0">|</span>
-                <span style="color:#94a3b8">Đã bán <strong style="color:#1a2535">999+</strong></span>
+                <span style="color:#94a3b8">Đã bán <strong style="color:#1a2535"><?= number_format($totalSold ?? 0, 0, ',', '.') ?></strong></span>
             </div>
 
             <?php

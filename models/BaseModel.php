@@ -330,7 +330,22 @@ class BaseModel
 		return $dem;
 	}
 	
-	public function layloaisanpham(){
+	public function laySoLuongDaBan($id_sp)
+	{
+		$db = $this->connect;
+		$sql = "SELECT SUM(so_luong) as total_sold FROM chitietdonhang WHERE id_sp = ?";
+		$stmt = $db->prepare($sql);
+		if ($stmt) {
+			$stmt->bind_param("i", $id_sp);
+			$stmt->execute();
+			$result = $stmt->get_result();
+			$row = $result->fetch_assoc();
+			return (int)($row['total_sold'] ?? 0);
+		}
+		return 0;
+	}
+
+	function layloaisanpham(){
 		$stmt = $this->connect->prepare("SELECT * FROM loaisanpham");
 		if (!$stmt) {
 			return 0;

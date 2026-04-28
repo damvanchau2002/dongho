@@ -287,6 +287,11 @@ class StoreModel
         return $this->model->capNhatFlashSale($id, $price, $endDate);
     }
 
+    public function getSoldQuantity($id_sp)
+    {
+        return $this->model->laySoLuongDaBan($id_sp);
+    }
+
     public function getAllProvinces() {
         return $this->model->getAllProvinces();
     }

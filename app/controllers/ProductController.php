@@ -70,6 +70,8 @@ class ProductController extends Controller
         }
 
         $spnn = $store->randomProducts(8);
+        $totalSold = $store->getSoldQuantity($_GET['id']);
+        
         // Lấy thông tin user đang đăng nhập để truyền sang view
         $loggedIn        = isset($_SESSION['tennd']);
         $currentUserName  = '';
@@ -85,6 +87,7 @@ class ProductController extends Controller
         $this->renderLegacy('chitietsanpham', [
             'proInfo'          => $proInfo,
             'spnn'             => $spnn,
+            'totalSold'        => $totalSold,
             'loggedIn'         => $loggedIn,
             'currentUserName'  => $currentUserName,
             'currentUserEmail' => $currentUserEmail,
