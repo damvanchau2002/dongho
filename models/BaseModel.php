@@ -7,7 +7,7 @@ require_once dirname(__FILE__) . '/../helpers/SecurityHelper.php';
 
 class BaseModel
 {
-	private $connect=null;
+	public $connect=null;
 	private $columnsCache = [];
 
 	function __construct()
@@ -525,14 +525,14 @@ class BaseModel
 			$res_pending = $this->connect->query("SELECT COUNT(*) as total FROM donhang WHERE trang_thai = 1");
 			$stats['total_pending_orders'] = $res_pending->fetch_assoc()['total'] ?? 0;
 			
-			// Revenue (Completed only: trang_thai = 2)
-			$res3 = $this->connect->query("SELECT SUM(tong_tien) as total FROM donhang WHERE trang_thai = 2");
+			// Revenue (Completed only: trang_thai = 3)
+			$res3 = $this->connect->query("SELECT SUM(tong_tien) as total FROM donhang WHERE trang_thai = 3");
 			$stats['total_revenue'] = $res3->fetch_assoc()['total'] ?? 0;
 
-			$res4 = $this->connect->query("SELECT SUM(tong_tien) as total FROM donhang WHERE trang_thai = 2 AND DATE(ngay_dat) = CURDATE()");
+			$res4 = $this->connect->query("SELECT SUM(tong_tien) as total FROM donhang WHERE trang_thai = 3 AND DATE(ngay_dat) = CURDATE()");
 			$stats['revenue_today'] = $res4->fetch_assoc()['total'] ?? 0;
 
-			$res5 = $this->connect->query("SELECT SUM(tong_tien) as total FROM donhang WHERE trang_thai = 2 AND MONTH(ngay_dat) = MONTH(CURDATE()) AND YEAR(ngay_dat) = YEAR(CURDATE())");
+			$res5 = $this->connect->query("SELECT SUM(tong_tien) as total FROM donhang WHERE trang_thai = 3 AND MONTH(ngay_dat) = MONTH(CURDATE()) AND YEAR(ngay_dat) = YEAR(CURDATE())");
 			$stats['revenue_month'] = $res5->fetch_assoc()['total'] ?? 0;
 		} else {
 			$stats['total_orders'] = 0;
@@ -560,7 +560,7 @@ class BaseModel
 		$sqlRevenue = "
 			SELECT 
 				DATE_FORMAT(ngay_dat, '%m/%Y') as month_year,
-				SUM(CASE WHEN trang_thai = 2 THEN tong_tien ELSE 0 END) as total_revenue,
+				SUM(CASE WHEN trang_thai = 3 THEN tong_tien ELSE 0 END) as total_revenue,
 				COUNT(*) as total_orders
 			FROM donhang 
 			WHERE ngay_dat >= DATE_SUB(LAST_DAY(CURDATE()), INTERVAL 6 MONTH)
@@ -589,12 +589,14 @@ class BaseModel
 		
 		$statusMap = [
 			1 => 'Chờ xử lý',
-			2 => 'Hoàn thành',
+			2 => 'Đang giao hàng',
+			3 => 'Hoàn thành',
 			0 => 'Đã hủy'
 		];
 
 		$statusCounts = [
 			'Chờ xử lý' => 0,
+			'Đang giao hàng' => 0,
 			'Hoàn thành' => 0,
 			'Đã hủy' => 0
 		];

@@ -70,11 +70,11 @@
                                         <td><?php echo date('d/m/Y H:i', strtotime($order['ngay_dat'])); ?></td>
                                         <td>
                                             <?php 
-                                                $statusText = [0 => 'Đã hủy', 1 => 'Chờ xử lý', 2 => 'Hoàn thành'];
+                                                $statusText = [0 => 'Đã hủy', 1 => 'Chờ xử lý', 2 => 'Đang giao hàng', 3 => 'Hoàn thành'];
                                                 $statusClass = "status-" . $order['trang_thai'];
                                             ?>
                                             <span class="badge-status <?php echo $statusClass; ?>">
-                                                <?php echo $statusText[$order['trang_thai']]; ?>
+                                                <?php echo $statusText[$order['trang_thai']] ?? 'Chưa xác định'; ?>
                                             </span>
                                         </td>
                                         <td class="text-center">

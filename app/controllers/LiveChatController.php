@@ -40,8 +40,16 @@ class LiveChatController extends Controller
             return;
         }
 
-        $senderType = $isAdmin ? 'admin' : 'user';
-        $userId = $isAdmin ? $targetUserId : $_SESSION['id_nd'];
+        // Kiểm tra xem admin đang chat từ bảng điều khiển hay từ giao diện người dùng
+        $isAdminPanelRequest = $isAdmin && $targetUserId > 0;
+
+        if ($isAdminPanelRequest) {
+            $userId = $targetUserId;
+            $senderType = 'admin';
+        } else {
+            $userId = isset($_SESSION['id_nd']) ? $_SESSION['id_nd'] : 0;
+            $senderType = 'user';
+        }
 
         if ($userId <= 0) {
             echo json_encode(['success' => false, 'error' => 'Không xác định được người nhận']);
@@ -49,13 +57,19 @@ class LiveChatController extends Controller
         }
 
         $stmt = $this->db->prepare("INSERT INTO tin_nhan (user_id, sender_type, message) VALUES (?, ?, ?)");
+        if (!$stmt) {
+            echo json_encode(['success' => false, 'error' => 'Lỗi prepare: ' . $this->db->error]);
+            return;
+        }
+        
         $stmt->bind_param("iss", $userId, $senderType, $message);
         
         if ($stmt->execute()) {
             echo json_encode(['success' => true]);
         } else {
-            echo json_encode(['success' => false, 'error' => 'Lỗi lưu tin nhắn']);
+            echo json_encode(['success' => false, 'error' => 'Lỗi lưu tin nhắn: ' . $stmt->error]);
         }
+        $stmt->close();
     }
 
     /**
@@ -74,7 +88,8 @@ class LiveChatController extends Controller
         }
 
         // Lấy userId: Nếu là admin thì lấy từ GET, nếu là user thì lấy từ session
-        $userId = $isAdmin && isset($_GET['user_id']) ? (int)$_GET['user_id'] : (isset($_SESSION['id_nd']) ? $_SESSION['id_nd'] : 0);
+        $isAdminPanelRequest = $isAdmin && isset($_GET['user_id']) && (int)$_GET['user_id'] > 0;
+        $userId = $isAdminPanelRequest ? (int)$_GET['user_id'] : (isset($_SESSION['id_nd']) ? $_SESSION['id_nd'] : 0);
 
         if ($userId <= 0) {
             echo json_encode(['success' => false, 'error' => 'Chưa chọn khách hàng']);
@@ -82,13 +97,21 @@ class LiveChatController extends Controller
         }
 
         // Đánh dấu đã đọc nếu người nhận đang xem
-        if ($isAdmin) {
-            $this->db->query("UPDATE tin_nhan SET is_read = 1 WHERE user_id = $userId AND sender_type = 'user' AND is_read = 0");
+        if ($isAdminPanelRequest) {
+            $stmt = $this->db->prepare("UPDATE tin_nhan SET is_read = 1 WHERE user_id = ? AND sender_type = 'user' AND is_read = 0");
+            $stmt->bind_param("i", $userId);
+            $stmt->execute();
         } else {
-            $this->db->query("UPDATE tin_nhan SET is_read = 1 WHERE user_id = $userId AND sender_type = 'admin' AND is_read = 0");
+            $stmt = $this->db->prepare("UPDATE tin_nhan SET is_read = 1 WHERE user_id = ? AND sender_type = 'admin' AND is_read = 0");
+            $stmt->bind_param("i", $userId);
+            $stmt->execute();
         }
 
         $stmt = $this->db->prepare("SELECT id, sender_type, message, DATE_FORMAT(created_at, '%H:%i') as time FROM tin_nhan WHERE user_id = ? ORDER BY id ASC");
+        if (!$stmt) {
+            echo json_encode(['success' => false, 'error' => 'Lỗi prepare: ' . $this->db->error]);
+            return;
+        }
         $stmt->bind_param("i", $userId);
         $stmt->execute();
         $res = $stmt->get_result();
@@ -99,6 +122,7 @@ class LiveChatController extends Controller
         }
 
         echo json_encode(['success' => true, 'messages' => $messages]);
+        $stmt->close();
     }
 
     /**
@@ -119,7 +143,7 @@ class LiveChatController extends Controller
                    (SELECT message FROM tin_nhan t2 WHERE t2.user_id = u.id_nd ORDER BY t2.id DESC LIMIT 1) as last_message,
                    (SELECT created_at FROM tin_nhan t3 WHERE t3.user_id = u.id_nd ORDER BY t3.id DESC LIMIT 1) as last_time,
                    (SELECT COUNT(*) FROM tin_nhan t4 WHERE t4.user_id = u.id_nd AND t4.sender_type = 'user' AND t4.is_read = 0) as unread_count
-            FROM nguoidung u
+            FROM quanlynguoidung u
             JOIN tin_nhan t ON u.id_nd = t.user_id
             GROUP BY u.id_nd
             ORDER BY last_time DESC

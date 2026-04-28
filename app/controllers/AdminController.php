@@ -379,7 +379,20 @@ class AdminController extends Controller
 
         if ($id > 0) {
             $store = new StoreModel();
-            $store->updateOrderStatus($id, $status);
+            
+            // Lấy thông tin đơn hàng trước khi cập nhật để kiểm tra trạng thái cũ (nếu cần)
+            $order = $store->orderById($id);
+            
+            if ($order && $order['trang_thai'] != $status) {
+                $store->updateOrderStatus($id, $status);
+                
+                // Gửi email thông báo cập nhật trạng thái
+                if (!empty($order['email_nguoinhan'])) {
+                    require_once BASE_PATH . '/helpers/MailHelper.php';
+                    // Đơn hàng vừa lấy ra chưa cập nhật trạng thái mới trong mảng, nên ta truyền status mới vào
+                    MailHelper::sendStatusUpdate($order['email_nguoinhan'], $order['ten_nguoinhan'] ?? 'Khách hàng', $order, $status);
+                }
+            }
         }
 
         header('Location: index.php?action=quanlydonhang');

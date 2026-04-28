@@ -195,6 +195,12 @@ class AuthController extends Controller
             // Chỉ cho phép hủy đơn hàng của chính mình và đang ở trạng thái xử lý (1)
             if ($order && $order['id_nd'] == $_SESSION['id_nd'] && $order['trang_thai'] == 1) {
                 $store->cancelOrder($id, $reason);
+                
+                // Gửi email thông báo hủy đơn
+                if (!empty($order['email_nguoinhan'])) {
+                    require_once BASE_PATH . '/helpers/MailHelper.php';
+                    MailHelper::sendStatusUpdate($order['email_nguoinhan'], $order['ten_nguoinhan'] ?? 'Khách hàng', $order, 0); // 0 = Đã hủy
+                }
             }
         }
 

@@ -55,8 +55,8 @@
                         <div class="order-info-box">
                             <h5>Trạng thái đơn hàng</h5>
                             <?php
-                                $statusText = [0 => 'Đã hủy', 1 => 'Chờ xử lý', 2 => 'Đã hoàn thành'];
-                                $statusClass = [0 => 'badge-danger', 1 => 'badge-warning', 2 => 'badge-success'];
+                                $statusText = [0 => 'Đã hủy', 1 => 'Chờ xử lý', 2 => 'Đang giao hàng', 3 => 'Đã hoàn thành'];
+                                $statusClass = [0 => 'badge-danger', 1 => 'badge-warning', 2 => 'badge-info', 3 => 'badge-success'];
                                 $paymentRaw = trim((string)($order['phuong_thuc_thanh_toan'] ?? 'COD'));
                                 $paymentKey = strtolower($paymentRaw);
                                 $paymentMap = [
@@ -80,7 +80,8 @@
                                 <div class="mb-3">
                                     <select name="trang_thai" class="form-control form-select mb-3">
                                         <option value="1" <?php echo $order['trang_thai'] == 1 ? 'selected' : ''; ?>>Chờ xử lý</option>
-                                        <option value="2" <?php echo $order['trang_thai'] == 2 ? 'selected' : ''; ?>>Đã hoàn thành</option>
+                                        <option value="2" <?php echo $order['trang_thai'] == 2 ? 'selected' : ''; ?>>Đang giao hàng</option>
+                                        <option value="3" <?php echo $order['trang_thai'] == 3 ? 'selected' : ''; ?>>Đã hoàn thành</option>
                                         <option value="0" <?php echo $order['trang_thai'] == 0 ? 'selected' : ''; ?>>Đã hủy</option>
                                     </select>
                                 </div>

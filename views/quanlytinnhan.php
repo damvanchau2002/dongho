@@ -229,11 +229,15 @@
                         data.users.forEach(u => {
                             const unread = u.unread_count > 0 ? `<div class="unread-badge">${u.unread_count}</div>` : '';
                             const activeClass = u.id_nd == currentUserId ? 'active' : '';
+                            // HTML escape để tránh XSS
+                            const escapedName = u.ten_nd.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+                            const escapedLastMsg = u.last_message ? u.last_message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;') : '';
+                            const escapedTime = u.last_time_formatted.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
                             html += `
-                                <div class="user-item ${activeClass}" onclick="openChat(${u.id_nd}, '${u.ten_nd}')">
-                                    <div class="user-name">${u.ten_nd}</div>
-                                    <div class="last-msg">${u.last_message}</div>
-                                    <div class="msg-time">${u.last_time_formatted}</div>
+                                <div class="user-item ${activeClass}" onclick="openChat(${u.id_nd}, '${escapedName}')">
+                                    <div class="user-name">${escapedName}</div>
+                                    <div class="last-msg">${escapedLastMsg}</div>
+                                    <div class="msg-time">${escapedTime}</div>
                                     ${unread}
                                 </div>
                             `;
@@ -281,10 +285,13 @@
                         let html = '';
                         data.messages.forEach(msg => {
                             const role = msg.sender_type === 'admin' ? 'admin' : 'user';
+                            // HTML escape để tránh XSS
+                            const escapedMsg = msg.message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+                            const escapedTime = msg.time.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
                             html += `
                                 <div class="message ${role}">
-                                    <div class="msg-content">${msg.message}</div>
-                                    <div class="msg-time-small">${msg.time}</div>
+                                    <div class="msg-content">${escapedMsg}</div>
+                                    <div class="msg-time-small">${escapedTime}</div>
                                 </div>
                             `;
                         });

@@ -79,7 +79,7 @@ ob_start();
 
 <?php
 $totalOrders = isset($orders) ? count($orders) : 0;
-$successOrders = isset($orders) ? count(array_filter($orders, fn($o) => $o['trang_thai'] == 2)) : 0;
+$successOrders = isset($orders) ? count(array_filter($orders, fn($o) => $o['trang_thai'] == 3)) : 0;
 $username = $user['ten_nd'] ?? ($_SESSION['tennd'] ?? 'U');
 $avatarLetter = mb_strtoupper(mb_substr($username, 0, 1));
 $isAdmin = isset($user['quyen_nd']) && $user['quyen_nd'] == 1;
@@ -137,8 +137,12 @@ $isAdmin = isset($user['quyen_nd']) && $user['quyen_nd'] == 1;
             <?php if (!empty($orders)): ?>
                 <?php foreach ($orders as $order):
                     $st = $order['trang_thai'];
-                    $badgeClass = $st == 0 ? 'badge-cancel' : ($st == 2 ? 'badge-success' : 'badge-pending');
-                    $badgeText  = $st == 0 ? '✕ Đã hủy' : ($st == 2 ? '✓ Thành công' : '⏳ Đang xử lý');
+                    $badgeClass = '';
+                    $badgeText  = '';
+                    if ($st == 0) { $badgeClass = 'badge-cancel'; $badgeText = '✕ Đã hủy'; }
+                    elseif ($st == 1) { $badgeClass = 'badge-pending'; $badgeText = '⏳ Chờ xử lý'; }
+                    elseif ($st == 2) { $badgeClass = 'badge-pending'; $badgeText = '🚚 Đang giao'; }
+                    elseif ($st == 3) { $badgeClass = 'badge-success'; $badgeText = '✓ Thành công'; }
                 ?>
                 <div class="order-item">
                     <div class="order-item-top">
@@ -181,8 +185,8 @@ $isAdmin = isset($user['quyen_nd']) && $user['quyen_nd'] == 1;
     $store2 = new StoreModel();
     $od = $store2->orderById((int)$_GET['view_order']);
     if ($od && $od['id_nd'] == $_SESSION['id_nd']):
-        $stMap = [0=>'Đã hủy',1=>'Đang xử lý',2=>'Thành công'];
-        $stBadge = [0=>'badge-cancel',1=>'badge-pending',2=>'badge-success'];
+        $stMap = [0=>'Đã hủy',1=>'Chờ xử lý',2=>'Đang giao hàng',3=>'Thành công'];
+        $stBadge = [0=>'badge-cancel',1=>'badge-pending',2=>'badge-pending',3=>'badge-success'];
         $pmRaw = strtolower(trim($od['phuong_thuc_thanh_toan'] ?? 'cod'));
         $pmLabel = $pmRaw === 'momo' ? 'Ví MoMo' : ($pmRaw === 'vnpay' ? 'VNPay' : 'Tiền mặt (COD)');
 ?>
