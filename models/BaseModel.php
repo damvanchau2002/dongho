@@ -528,7 +528,9 @@ class BaseModel
 			
 			// Revenue (Completed only: trang_thai = 3)
 			$res3 = $this->connect->query("SELECT SUM(tong_tien) as total FROM donhang WHERE trang_thai = 3");
-			$stats['total_revenue'] = $res3->fetch_assoc()['total'] ?? 0;
+			$total_rev = $res3->fetch_assoc()['total'] ?? 0;
+			$stats['total_revenue'] = $total_rev;
+			$stats['total_profit'] = $total_rev * 0.4; // Ước tính lợi nhuận 40%
 
 			$res4 = $this->connect->query("SELECT SUM(tong_tien) as total FROM donhang WHERE trang_thai = 3 AND DATE(ngay_dat) = CURDATE()");
 			$stats['revenue_today'] = $res4->fetch_assoc()['total'] ?? 0;
@@ -549,7 +551,8 @@ class BaseModel
 	public function layDuLieuBieuDo() {
 		$chartData = [
 			'revenue_by_month' => [],
-			'orders_by_status' => []
+			'orders_by_status' => [],
+			'top_products' => []
 		];
 
 		$res = $this->connect->query("SHOW TABLES LIKE 'donhang'");
@@ -617,6 +620,27 @@ class BaseModel
 		foreach ($statusCounts as $label => $count) {
 			$chartData['orders_by_status']['labels'][] = $label;
 			$chartData['orders_by_status']['data'][] = $count;
+		}
+
+		// 3. Top 5 sản phẩm bán chạy nhất
+		$sqlTopProducts = "
+			SELECT sp.ten_sp, SUM(ct.so_luong) as total_sold
+			FROM chitietdonhang ct
+			JOIN sanpham sp ON ct.id_sp = sp.id_sp
+			JOIN donhang dh ON ct.id_dh = dh.id_dh
+			WHERE dh.trang_thai = 3
+			GROUP BY ct.id_sp
+			ORDER BY total_sold DESC
+			LIMIT 5
+		";
+		$resTop = $this->connect->query($sqlTopProducts);
+		if ($resTop) {
+			while ($row = $resTop->fetch_assoc()) {
+				$chartData['top_products'][] = [
+					'name' => $row['ten_sp'],
+					'sold' => (int)$row['total_sold']
+				];
+			}
 		}
 
 		return $chartData;

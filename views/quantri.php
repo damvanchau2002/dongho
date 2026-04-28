@@ -135,43 +135,53 @@
 	    <div class="col-lg-10 col-md-9">
             <!-- Dashboard Stats -->
             <div class="row">
-                <div class="col-md-3">
-                    <div class="stat-card bg-products">
+                <div class="col">
+                    <div class="stat-card bg-products" style="padding: 15px;">
                         <div class="info">
-                            <h3><?= $stats['total_products'] ?></h3>
-                            <p>Sản phẩm</p>
+                            <h3 style="font-size: 1.5rem;"><?= $stats['total_products'] ?></h3>
+                            <p style="font-size: 0.8rem;">Sản phẩm</p>
                         </div>
-                        <div class="icon"><i class="fas fa-boxes"></i></div>
+                        <div class="icon"><i class="fas fa-boxes" style="font-size: 2rem;"></i></div>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="stat-card bg-revenue">
+                <div class="col">
+                    <div class="stat-card bg-revenue" style="padding: 15px;">
                         <div class="info">
-                            <h3><?= number_format($stats['revenue_month'], 0, ',', '.') ?>đ</h3>
-                            <p>Doanh thu tháng</p>
+                            <h3 style="font-size: 1.5rem;"><?= number_format($stats['revenue_month'], 0, ',', '.') ?>đ</h3>
+                            <p style="font-size: 0.8rem;">Doanh thu</p>
                         </div>
-                        <div class="icon"><i class="fas fa-money-bill-wave"></i></div>
+                        <div class="icon"><i class="fas fa-money-bill-wave" style="font-size: 2rem;"></i></div>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="stat-card bg-orders">
+                <div class="col">
+                    <div class="stat-card bg-brands" style="padding: 15px; background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);">
                         <div class="info">
-                            <h3><?= $stats['total_orders'] ?? 0 ?></h3>
-                            <p>Tổng đơn hàng</p>
+                            <h3 style="font-size: 1.5rem;"><?= number_format($stats['total_profit'] ?? 0, 0, ',', '.') ?>đ</h3>
+                            <p style="font-size: 0.8rem;">Lợi nhuận <small>(ước tính)</small></p>
                         </div>
-                        <div class="icon"><i class="fas fa-shopping-cart"></i></div>
+                        <div class="icon"><i class="fas fa-chart-line" style="font-size: 2rem;"></i></div>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="stat-card bg-pending">
+                <div class="col">
+                    <div class="stat-card bg-orders" style="padding: 15px;">
                         <div class="info">
-                            <h3><?= $stats['total_pending_orders'] ?? 0 ?></h3>
-                            <p>Đơn chờ duyệt</p>
+                            <h3 style="font-size: 1.5rem;"><?= $stats['total_orders'] ?? 0 ?></h3>
+                            <p style="font-size: 0.8rem;">Tổng đơn</p>
                         </div>
-                        <div class="icon"><i class="fas fa-clock"></i></div>
+                        <div class="icon"><i class="fas fa-shopping-cart" style="font-size: 2rem;"></i></div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="stat-card bg-pending" style="padding: 15px;">
+                        <div class="info">
+                            <h3 style="font-size: 1.5rem;"><?= $stats['total_pending_orders'] ?? 0 ?></h3>
+                            <p style="font-size: 0.8rem;">Chờ duyệt</p>
+                        </div>
+                        <div class="icon"><i class="fas fa-clock" style="font-size: 2rem;"></i></div>
                     </div>
                 </div>
             </div>
+
 
             <!-- Charts Section -->
             <div class="row mb-5">
@@ -190,6 +200,18 @@
                             <div style="position: relative; flex-grow: 1; min-height: 250px; width: 100%; display: flex; justify-content: center;">
                                 <canvas id="orderStatusChart"></canvas>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Products Chart -->
+            <div class="row mb-5">
+                <div class="col-md-12">
+                    <div class="card shadow-sm border-0" style="border-radius: 15px;">
+                        <div class="card-body">
+                            <h5 class="card-title font-weight-bold text-secondary mb-4">Top 5 Sản phẩm Bán chạy</h5>
+                            <canvas id="topProductsChart" height="80"></canvas>
                         </div>
                     </div>
                 </div>
@@ -271,6 +293,54 @@
                     legend: {
                         position: 'bottom',
                         labels: { padding: 20 }
+                    }
+                }
+            }
+        });
+
+        // 3. Biểu đồ Top 5 sản phẩm (Bar Chart)
+        const topCtx = document.getElementById('topProductsChart').getContext('2d');
+        const topProductsData = chartData.top_products || [];
+        const labelsTop = topProductsData.map(item => item.name);
+        const dataTop = topProductsData.map(item => item.sold);
+
+        new Chart(topCtx, {
+            type: 'bar',
+            data: {
+                labels: labelsTop,
+                datasets: [{
+                    label: 'Số lượng đã bán',
+                    data: dataTop,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 }
+                    },
+                    x: {
+                        ticks: {
+                            callback: function(value) {
+                                let label = this.getLabelForValue(value);
+                                return label.length > 20 ? label.substr(0, 20) + '...' : label;
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: function(context) {
+                                return context[0].label; // Hiển thị full name khi hover
+                            }
+                        }
                     }
                 }
             }
