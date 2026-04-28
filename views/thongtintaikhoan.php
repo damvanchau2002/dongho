@@ -2,6 +2,11 @@
 $pageTitle = "Tài khoản của tôi - ChronoLux";
 ob_start();
 ?>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- Leaflet CSS for Map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 .acc-wrap { font-family:'Inter',sans-serif; background:#f0f4f8; min-height:100vh; padding:40px 0 60px; }
@@ -75,6 +80,25 @@ ob_start();
 .total-final { border-top:2px solid #e8edf3; margin-top:8px; padding-top:14px; font-size:20px; font-weight:800; color:#e53e3e; }
 @keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
 @media(max-width:768px){.acc-container{grid-template-columns:1fr}.info-grid{grid-template-columns:1fr}}
+/* PROFILE FORM */
+.pf-label { display:block; font-size:12px; font-weight:700; color:#64748b; margin-bottom:6px; text-transform:uppercase; letter-spacing:.4px; }
+.pf-field { position:relative; margin-bottom:14px; }
+.pf-field i { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:14px; pointer-events:none; }
+.pf-input { width:100%; padding:11px 14px 11px 42px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; color:#1a2535; font-family:inherit; transition:.2s; box-sizing:border-box; background:#f8fafc; }
+.pf-input:focus { outline:none; border-color:#1a4a7a; background:#fff; box-shadow:0 0 0 3px rgba(26,74,122,.1); }
+.pf-row2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.btn-save-profile { background:linear-gradient(135deg,#1a4a7a,#0f2942); color:#fff; border:none; padding:13px 32px; border-radius:12px; font-size:14px; font-weight:700; cursor:pointer; transition:.2s; display:inline-flex; align-items:center; gap:8px; margin-top:6px; }
+.btn-save-profile:hover { opacity:.9; transform:translateY(-1px); box-shadow:0 8px 20px rgba(15,41,66,.25); }
+.alert-profile { padding:12px 16px; border-radius:10px; font-size:14px; font-weight:500; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+.alert-success-p { background:#dcfce7; color:#166534; border:1px solid #86efac; }
+.alert-error-p   { background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; }
+/* ADDRESS PICKER */
+.pf-select { appearance:none; -webkit-appearance:none; cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 12px center; background-size:16px; }
+.pf-select:disabled { opacity:.55; cursor:not-allowed; }
+.addr-preview-box { margin-top:8px; font-size:12px; color:#166534; background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:8px 12px; display:none; align-items:center; gap:6px; }
+@media(max-width:768px){ .pf-row2{grid-template-columns:1fr} }
 </style>
 
 <?php
@@ -98,6 +122,18 @@ $isAdmin = isset($user['quyen_nd']) && $user['quyen_nd'] == 1;
         <div class="acc-info-item">
             <i class="fas fa-envelope"></i>
             <span><?= htmlspecialchars($user['email_nd']) ?></span>
+        </div>
+        <?php endif; ?>
+        <?php if (!empty($user['sdt_nd'])): ?>
+        <div class="acc-info-item">
+            <i class="fas fa-phone"></i>
+            <span><?= htmlspecialchars($user['sdt_nd']) ?></span>
+        </div>
+        <?php endif; ?>
+        <?php if (!empty($user['diachi_nd'])): ?>
+        <div class="acc-info-item">
+            <i class="fas fa-map-marker-alt"></i>
+            <span><?= htmlspecialchars($user['diachi_nd']) ?></span>
         </div>
         <?php endif; ?>
         <?php if (!empty($user['ngayt_nd'])): ?>
@@ -128,6 +164,167 @@ $isAdmin = isset($user['quyen_nd']) && $user['quyen_nd'] == 1;
 
     <!-- MAIN -->
     <div class="acc-main">
+
+        <!-- PROFILE EDIT CARD -->
+        <div class="acc-card" id="profileCard">
+            <div class="acc-card-title"><i class="fas fa-user-edit"></i> Thông tin cá nhân</div>
+
+            <?php if (isset($_SESSION['profile_success'])): ?>
+            <div class="alert-profile alert-success-p"><i class="fas fa-check-circle"></i> <?= htmlspecialchars($_SESSION['profile_success']); unset($_SESSION['profile_success']); ?></div>
+            <?php endif; ?>
+            <?php if (isset($_SESSION['profile_error'])): ?>
+            <div class="alert-profile alert-error-p"><i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars($_SESSION['profile_error']); unset($_SESSION['profile_error']); ?></div>
+            <?php endif; ?>
+
+            <form method="POST" action="index.php?action=thongtintaikhoan">
+                <input type="hidden" name="csrf_token" value="<?= SecurityHelper::csrfToken() ?>">
+                <input type="hidden" name="capnhat_thongtin" value="1">
+
+                <div class="pf-row2">
+                    <div>
+                        <label class="pf-label">Họ và tên *</label>
+                        <div class="pf-field">
+                            <input type="text" class="pf-input" name="ten_nd"
+                                value="<?= htmlspecialchars($user['ten_nd'] ?? '') ?>"
+                                placeholder="Nguyễn Văn A" required maxlength="100">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="pf-label">Email</label>
+                        <div class="pf-field">
+                            <input type="email" class="pf-input" name="email_nd"
+                                value="<?= htmlspecialchars($user['email_nd'] ?? '') ?>"
+                                placeholder="email@example.com" maxlength="255">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pf-row2">
+                    <div>
+                        <label class="pf-label">Số điện thoại</label>
+                        <div class="pf-field">
+                            <input type="text" class="pf-input" name="sdt_nd"
+                                value="<?= htmlspecialchars($user['sdt_nd'] ?? '') ?>"
+                                placeholder="0901 234 567" maxlength="20">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                    </div>
+                    <div></div><!-- spacer -->
+                </div>
+
+                <!-- ===== ADDRESS PICKER (3-level) ===== -->
+                <div style="margin-bottom:14px">
+                    <label class="pf-label"><i class="fas fa-map-marker-alt" style="margin-right:5px;color:#d4af37"></i>Địa chỉ giao hàng</label>
+                    <!-- Hidden field stores the final assembled address -->
+                    <input type="hidden" name="diachi_nd" id="pf_full_addr" value="<?= htmlspecialchars($user['diachi_nd'] ?? '') ?>">
+
+                    <!-- Street / House number -->
+                    <div class="pf-field" style="margin-bottom:8px">
+                        <input type="text" class="pf-input" id="pf_street"
+                            placeholder="Số nhà, tên đường..." maxlength="200">
+                        <i class="fas fa-road"></i>
+                    </div>
+
+                    <!-- Province + District in 2 cols -->
+                    <div class="pf-row2" style="gap:8px;margin-bottom:8px">
+                        <div class="pf-field" style="margin-bottom:0">
+                            <select class="pf-input pf-select" id="pf_province">
+                                <option value="">-- Tỉnh / Thành phố --</option>
+                            </select>
+                            <i class="fas fa-map"></i>
+                        </div>
+                        <div class="pf-field" style="margin-bottom:0">
+                            <select class="pf-input pf-select" id="pf_district" disabled>
+                                <option value="">-- Quận / Huyện --</option>
+                            </select>
+                            <i class="fas fa-city"></i>
+                        </div>
+                    </div>
+
+                    <!-- Ward -->
+                    <div class="pf-field" style="margin-bottom:6px">
+                        <select class="pf-input pf-select" id="pf_ward" disabled>
+                            <option value="">-- Phường / Xã --</option>
+                        </select>
+                        <i class="fas fa-home"></i>
+                    </div>
+
+                    <!-- Preview assembled address -->
+                    <div class="addr-preview-box" id="pf_preview">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="pf_preview_text"></span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-save-profile">
+                    <i class="fas fa-save"></i> Lưu thay đổi
+                </button>
+            </form>
+        </div>
+
+        <!-- PASSWORD CHANGE CARD -->
+        <div class="acc-card" id="passwordCard">
+            <div class="acc-card-title"><i class="fas fa-lock"></i> Đổi mật khẩu</div>
+
+            <?php if (isset($_SESSION['password_success'])): ?>
+            <div class="alert-profile alert-success-p"><i class="fas fa-check-circle"></i> <?= htmlspecialchars($_SESSION['password_success']); unset($_SESSION['password_success']); ?></div>
+            <?php endif; ?>
+            <?php if (isset($_SESSION['password_error'])): ?>
+            <div class="alert-profile alert-error-p"><i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars($_SESSION['password_error']); unset($_SESSION['password_error']); ?></div>
+            <?php endif; ?>
+
+            <form method="POST" action="index.php?action=thongtintaikhoan" id="formDoiMK">
+                <input type="hidden" name="csrf_token" value="<?= SecurityHelper::csrfToken() ?>">
+                <input type="hidden" name="doi_mat_khau" value="1">
+
+                <div class="pf-field" style="margin-bottom:14px">
+                    <label class="pf-label">Mật khẩu hiện tại *</label>
+                    <div style="position:relative">
+                        <input type="password" class="pf-input" name="matkhau_cu" id="mk_cu"
+                            placeholder="Nhập mật khẩu hiện tại" required maxlength="100">
+                        <i class="fas fa-lock" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:14px;pointer-events:none"></i>
+                        <button type="button" onclick="togglePw('mk_cu','eye_cu')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;font-size:14px"><i class="fas fa-eye" id="eye_cu"></i></button>
+                    </div>
+                </div>
+
+                <div class="pf-row2">
+                    <div>
+                        <label class="pf-label">Mật khẩu mới * <span style="font-size:11px;color:#94a3b8;text-transform:none;letter-spacing:0">(ít nhất 6 ký tự)</span></label>
+                        <div style="position:relative">
+                            <input type="password" class="pf-input" name="matkhau_moi" id="mk_moi"
+                                placeholder="Nhập mật khẩu mới" required maxlength="100" minlength="6"
+                                oninput="checkStrength(this.value)">
+                            <i class="fas fa-key" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:14px;pointer-events:none"></i>
+                            <button type="button" onclick="togglePw('mk_moi','eye_moi')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;font-size:14px"><i class="fas fa-eye" id="eye_moi"></i></button>
+                        </div>
+                        <!-- Password strength bar -->
+                        <div id="strengthBar" style="height:4px;border-radius:4px;background:#e2e8f0;margin-top:6px;overflow:hidden">
+                            <div id="strengthFill" style="height:100%;width:0%;border-radius:4px;transition:.3s"></div>
+                        </div>
+                        <div id="strengthText" style="font-size:11px;margin-top:3px;color:#94a3b8"></div>
+                    </div>
+                    <div>
+                        <label class="pf-label">Xác nhận mật khẩu mới *</label>
+                        <div style="position:relative">
+                            <input type="password" class="pf-input" name="matkhau_xacnhan" id="mk_xn"
+                                placeholder="Nhập lại mật khẩu mới" required maxlength="100"
+                                oninput="checkMatch()">
+                            <i class="fas fa-check-double" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:14px;pointer-events:none"></i>
+                            <button type="button" onclick="togglePw('mk_xn','eye_xn')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;font-size:14px"><i class="fas fa-eye" id="eye_xn"></i></button>
+                        </div>
+                        <div id="matchText" style="font-size:11px;margin-top:3px"></div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-save-profile" style="background:linear-gradient(135deg,#e53e3e,#c53030);margin-top:6px">
+                    <i class="fas fa-key"></i> Đổi mật khẩu
+                </button>
+            </form>
+        </div>
+
+        <!-- ORDERS CARD -->
         <div class="acc-card">
             <div class="acc-card-title">
                 <i class="fas fa-shopping-bag"></i> Đơn hàng của tôi
@@ -215,6 +412,13 @@ $isAdmin = isset($user['quyen_nd']) && $user['quyen_nd'] == 1;
                 </div>
             </div>
 
+            <?php if ($od['trang_thai'] == 2 && !empty($od['id_shipper'])): ?>
+            <div class="info-box mt-3" style="width:100%; max-width:100%; border:1px solid #e2e8f0; padding:15px; border-radius:10px; background:#f8fafc;">
+                <div class="info-box-title" style="margin-bottom:15px;"><i class="fas fa-map-marked-alt" style="color:#1a4a7a"></i> Theo dõi lộ trình giao hàng trực tiếp</div>
+                <div id="customerShippingMap" style="height: 300px; width: 100%; border-radius: 8px; z-index: 1;"></div>
+            </div>
+            <?php endif; ?>
+
             <table class="items-table">
                 <thead><tr>
                     <th style="text-align:left">Sản phẩm</th>
@@ -300,7 +504,452 @@ function hideCancel() {
 document.getElementById('cancelModal').addEventListener('click', function(e) {
     if (e.target === this) hideCancel();
 });
+
+/* ---- Password card helpers ---- */
+function togglePw(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon  = document.getElementById(iconId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+}
+
+function checkStrength(val) {
+    const fill = document.getElementById('strengthFill');
+    const text = document.getElementById('strengthText');
+    if (!fill) return;
+    let score = 0;
+    if (val.length >= 6)  score++;
+    if (val.length >= 10) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+    const levels = [
+        { pct:'20%', color:'#ef4444', label:'Rất yếu' },
+        { pct:'40%', color:'#f97316', label:'Yếu' },
+        { pct:'60%', color:'#eab308', label:'Trung bình' },
+        { pct:'80%', color:'#22c55e', label:'Mạnh' },
+        { pct:'100%',color:'#16a34a', label:'Rất mạnh 🔒' },
+    ];
+    const lvl = levels[Math.max(0, score - 1)] || levels[0];
+    fill.style.width = val.length === 0 ? '0%' : lvl.pct;
+    fill.style.background = lvl.color;
+    text.textContent = val.length === 0 ? '' : lvl.label;
+    text.style.color = lvl.color;
+}
+
+function checkMatch() {
+    const moi = document.getElementById('mk_moi');
+    const xn  = document.getElementById('mk_xn');
+    const txt = document.getElementById('matchText');
+    if (!moi || !xn || !txt) return;
+    if (xn.value === '') { txt.textContent = ''; return; }
+    if (moi.value === xn.value) {
+        txt.textContent = '✓ Mật khẩu khớp';
+        txt.style.color = '#16a34a';
+    } else {
+        txt.textContent = '✗ Chưa khớp';
+        txt.style.color = '#ef4444';
+    }
+}
 </script>
+
+<!-- ===== ADDRESS PICKER SCRIPT ===== -->
+<script>
+(function(){
+  var API = 'https://provinces.open-api.vn/api';
+
+  /* ── Normalize Vietnamese text: remove diacritics & common prefixes ── */
+  function normVN(str) {
+    if (!str) return '';
+    // Step 1: replace đ/Đ BEFORE NFD (they are Latin Extended, NFD won't decompose them)
+    var s = str.replace(/[đĐ]/g, function(c){ return c === 'đ' ? 'd' : 'D'; });
+    // Step 2: NFD decompose + strip combining diacritical marks
+    s = s.normalize('NFD').replace(/[\u0300-\u036f\u1dc0-\u1dff\u20d0-\u20ff]/g, '');
+    // Step 3: lowercase, trim, remove dots (for abbreviations like TP., Q., P.)
+    s = s.toLowerCase().trim().replace(/\./g, '');
+    // Step 4: strip common admin-unit prefixes
+    s = s.replace(/^(tinh|thanh pho|tp|quan|huyen|phuong|xa|thi tran|thi xa)\s*/i, '').trim();
+    return s;
+  }
+
+  function fuzzyMatch(a, b) {
+    var na = normVN(a), nb = normVN(b);
+    if (!na || !nb || nb.length < 3) return false; // guard against empty / too-short
+    return na === nb || na.includes(nb) || nb.includes(na);
+  }
+
+  /* ── Fill a <select> and try to pre-select by name ── */
+  function fillSelect(sel, items, labelKey, codeKey, preselectName) {
+    // Remove all options except placeholder
+    while (sel.options.length > 1) sel.remove(1);
+    items.forEach(function(item) {
+      var opt = document.createElement('option');
+      opt.value       = item[codeKey];
+      opt.textContent = item[labelKey];
+      opt.dataset.name = item[labelKey];
+      sel.appendChild(opt);
+    });
+
+    if (preselectName && preselectName.trim()) {
+      // 1st pass: exact normalized match
+      var found = Array.from(sel.options).find(function(o) {
+        return normVN(o.dataset.name) === normVN(preselectName);
+      });
+      // 2nd pass: fuzzy includes match
+      if (!found) {
+        found = Array.from(sel.options).find(function(o) {
+          return fuzzyMatch(o.dataset.name, preselectName);
+        });
+      }
+      if (found) { sel.value = found.value; return found; }
+    }
+    return null;
+  }
+
+  /* ── Assemble the hidden field & preview ── */
+  function rebuildAddr(cfg, provSel, distSel, wardSel) {
+    var street = (document.getElementById(cfg.streetId) || {value:''}).value.trim();
+    var pName  = provSel.selectedIndex > 0 ? (provSel.options[provSel.selectedIndex].dataset.name || '') : '';
+    // dName intentionally excluded — district used only to filter wards, not saved in address
+    var wName  = wardSel.selectedIndex > 0 ? (wardSel.options[wardSel.selectedIndex].dataset.name || '') : '';
+
+    // Final address: Số nhà/đường, Phường/Xã, Tỉnh/Thành phố  (NO Quận/Huyện)
+    var parts = [street, wName, pName].filter(Boolean);
+    var full  = parts.join(', ');
+
+
+    var hidden = document.getElementById(cfg.hiddenId);
+    if (hidden) hidden.value = full;
+
+    var preview     = document.getElementById(cfg.previewId);
+    var previewText = document.getElementById(cfg.previewTextId);
+    if (preview && previewText) {
+      if (full) { previewText.textContent = full; preview.style.display = 'flex'; }
+      else      { preview.style.display = 'none'; }
+    }
+  }
+
+  /* ── Fetch with AbortController timeout ── */
+  function fetchJSON(url, timeoutMs) {
+    timeoutMs = timeoutMs || 8000;
+    var ctrl = new AbortController();
+    var tid  = setTimeout(function(){ ctrl.abort(); }, timeoutMs);
+    return fetch(url, { signal: ctrl.signal })
+      .then(function(r) { clearTimeout(tid); return r.json(); })
+      .catch(function(e) { clearTimeout(tid); throw e; });
+  }
+
+    function setLoading(sel, isLoading) {
+        if (!sel || !sel.options || sel.options.length === 0) return;
+        if (isLoading) {
+            sel.disabled = true;
+            sel.options[0].textContent = 'Dang tai...';
+        }
+    }
+
+    /* ── Public init ── */
+  window.initAddressPicker = function(cfg) {
+    var provSel = document.getElementById(cfg.provinceId);
+    var distSel = document.getElementById(cfg.districtId);
+    var wardSel = document.getElementById(cfg.wardId);
+    if (!provSel || !distSel || !wardSel) return;
+
+    // Store placeholder texts
+    provSel.dataset.placeholder = provSel.options[0] ? provSel.options[0].textContent : '-- Tỉnh / Thành phố --';
+    distSel.dataset.placeholder = distSel.options[0] ? distSel.options[0].textContent : '-- Quận / Huyện --';
+    wardSel.dataset.placeholder = wardSel.options[0] ? wardSel.options[0].textContent : '-- Phường / Xã --';
+
+    /* ── Parse existing address into parts ──
+       New format (3 parts): street, ward, province          → no district
+       Old format (4+ parts): street, ward, district, province → has district
+    */
+    var existing = cfg.existingAddress || '';
+    var preStreet = '', preWard = '', preDist = '', preProv = '';
+    if (existing) {
+      var parts = existing.split(',').map(function(p){ return p.trim(); });
+      if (parts.length >= 4) {
+        // OLD format includes district
+        preProv   = parts[parts.length - 1];
+        preDist   = parts[parts.length - 2];
+        preWard   = parts[parts.length - 3];
+        preStreet = parts.slice(0, parts.length - 3).join(', ');
+      } else if (parts.length === 3) {
+        // NEW format: street, ward, province (no district)
+        preProv   = parts[2];
+        preWard   = parts[1];
+        preStreet = parts[0];
+        preDist   = ''; // unknown — will be resolved via API
+      } else if (parts.length === 2) {
+        preProv = parts[1]; preStreet = parts[0];
+      } else {
+        preStreet = existing;
+      }
+    }
+
+    var streetEl = document.getElementById(cfg.streetId);
+    if (streetEl && !streetEl.value && preStreet) streetEl.value = preStreet;
+    if (streetEl) streetEl.addEventListener('input', function(){ rebuildAddr(cfg, provSel, distSel, wardSel); });
+
+    /* Ward loader */
+    function loadWards(distCode, presel) {
+      wardSel.innerHTML = '<option value="">' + wardSel.dataset.placeholder + '</option>';
+      wardSel.disabled  = true;
+      rebuildAddr(cfg, provSel, distSel, wardSel);
+      if (!distCode) return;
+      setLoading(wardSel, true);
+      fetchJSON(API + '/d/' + distCode + '?depth=2')
+        .then(function(data) {
+          var items = data.wards || [];
+          wardSel.innerHTML = '<option value="">' + wardSel.dataset.placeholder + '</option>';
+          fillSelect(wardSel, items, 'name', 'code', presel);
+          wardSel.disabled = false;
+          rebuildAddr(cfg, provSel, distSel, wardSel);
+        })
+        .catch(function(e) {
+          console.error('loadWards error:', e);
+          wardSel.innerHTML = '<option value="">⚠ Không tải được xã/phường</option>';
+          wardSel.disabled = false;
+        });
+    }
+
+    /* District loader */
+    function loadDistricts(provCode, presel, thenWard) {
+      distSel.innerHTML = '<option value="">' + distSel.dataset.placeholder + '</option>';
+      distSel.disabled  = true;
+      wardSel.innerHTML = '<option value="">' + wardSel.dataset.placeholder + '</option>';
+      wardSel.disabled  = true;
+      rebuildAddr(cfg, provSel, distSel, wardSel);
+      if (!provCode) return;
+      setLoading(distSel, true);
+      fetchJSON(API + '/p/' + provCode + '?depth=2')
+        .then(function(data) {
+          var items = data.districts || [];
+          distSel.innerHTML = '<option value="">' + distSel.dataset.placeholder + '</option>';
+          var found = fillSelect(distSel, items, 'name', 'code', presel);
+          distSel.disabled = false;
+          rebuildAddr(cfg, provSel, distSel, wardSel);
+          if (found && distSel.value && thenWard) {
+            loadWards(distSel.value, thenWard);
+          }
+        })
+        .catch(function(e) {
+          console.error('loadDistricts error:', e);
+          distSel.innerHTML = '<option value="">⚠ Không tải được quận/huyện</option>';
+          distSel.disabled = false;
+        });
+    }
+
+    /* ── resolveWardDistrict: find which district contains wardName (depth=3 API)
+       Used when saved address has NO district (new 3-part format).
+       Calls back with (districtCode, districtName) or (null, null) if not found. */
+    function resolveWardDistrict(provCode, wardName, cb) {
+      fetchJSON(API + '/p/' + provCode + '?depth=3', 12000)
+        .then(function(data) {
+          var districts = data.districts || [];
+          for (var i = 0; i < districts.length; i++) {
+            var wards = districts[i].wards || [];
+            for (var j = 0; j < wards.length; j++) {
+              if (fuzzyMatch(wards[j].name, wardName)) {
+                cb(districts[i].code, districts[i].name);
+                return;
+              }
+            }
+          }
+          cb(null, null); // ward not found in any district
+        })
+        .catch(function() { cb(null, null); });
+    }
+
+    /* Change events */
+    provSel.addEventListener('change', function(){
+      preDist = ''; preWard = '';
+      loadDistricts(provSel.value, '', '');
+    });
+    distSel.addEventListener('change', function(){
+      preWard = '';
+      loadWards(distSel.value, '');
+    });
+    wardSel.addEventListener('change', function(){
+      rebuildAddr(cfg, provSel, distSel, wardSel);
+    });
+
+    /* Bootstrap: load all provinces then cascade pre-selection */
+    setLoading(provSel, true);
+    fetchJSON(API + '/p/')
+      .then(function(provinces) {
+        provSel.innerHTML = '<option value="">' + provSel.dataset.placeholder + '</option>';
+        var found = fillSelect(provSel, provinces, 'name', 'code', preProv);
+        provSel.disabled = false;
+
+        if (!found || !provSel.value) {
+          rebuildAddr(cfg, provSel, distSel, wardSel);
+          return;
+        }
+
+        if (preDist) {
+          // OLD format: district name known → normal cascade
+          loadDistricts(provSel.value, preDist, preWard);
+        } else if (preWard) {
+          // NEW format: no district, but have ward → resolve district via depth=3
+          resolveWardDistrict(provSel.value, preWard, function(distCode, distName) {
+            if (distCode) {
+              loadDistricts(provSel.value, distName, preWard);
+            } else {
+              // Ward not found → just load districts without pre-select
+              loadDistricts(provSel.value, '', '');
+            }
+          });
+        } else {
+          loadDistricts(provSel.value, '', '');
+        }
+      })
+      .catch(function(e) {
+        console.error('loadProvinces error:', e);
+        provSel.innerHTML = '<option value="">⚠ Không tải được tỉnh/thành</option>';
+        provSel.disabled  = false;
+        rebuildAddr(cfg, provSel, distSel, wardSel);
+      });
+    };
+
+  /* Auto-init for profile form */
+  document.addEventListener('DOMContentLoaded', function(){
+    var hiddenEl = document.getElementById('pf_full_addr');
+    if (!hiddenEl) return;
+    initAddressPicker({
+      streetId:      'pf_street',
+      provinceId:    'pf_province',
+      districtId:    'pf_district',
+      wardId:        'pf_ward',
+      hiddenId:      'pf_full_addr',
+      previewId:     'pf_preview',
+      previewTextId: 'pf_preview_text',
+      existingAddress: hiddenEl.value
+    });
+  });
+})();
+</script>
+
+<?php if (isset($_GET['view_order']) && $od['trang_thai'] == 2 && !empty($od['id_shipper'])): ?>
+<!-- Scripts for Tracking Map -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const mapContainer = document.getElementById('customerShippingMap');
+        if (mapContainer) {
+            const map = L.map('customerShippingMap').setView([10.762622, 106.660172], 13);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            let shipperMarker, destMarker, routeLine, routeOutline;
+            let hasFitted = false;
+
+            const shipperIcon = L.icon({
+                iconUrl: 'https://cdn-icons-png.flaticon.com/512/2830/2830305.png',
+                iconSize: [40, 40],
+                iconAnchor: [20, 40]
+            });
+
+            const destIcon = L.icon({
+                iconUrl: 'https://cdn-icons-png.flaticon.com/512/149/149059.png',
+                iconSize: [40, 40],
+                iconAnchor: [20, 40]
+            });
+
+            const destinationAddress = <?php echo json_encode($od['diachi_nguoinhan']); ?>;
+            let destLatLng = null;
+
+            // Geocode Address (with progressive fallback)
+            async function geocodeWithFallback(address) {
+                let parts = address.split(',').map(p => p.trim());
+                while (parts.length > 0) {
+                    let query = parts.join(', ');
+                    try {
+                        let res = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(query));
+                        let data = await res.json();
+                        if (data && data.length > 0) return data[0];
+                    } catch (e) {
+                        console.error("Geocoding API error:", e);
+                    }
+                    parts.shift();
+                }
+                return null;
+            }
+
+            geocodeWithFallback(destinationAddress).then(result => {
+                if (result) {
+                    destLatLng = L.latLng(result.lat, result.lon);
+                    destMarker = L.marker(destLatLng, {icon: destIcon}).addTo(map).bindPopup("<b>Điểm nhận hàng của bạn</b>").openPopup();
+                    map.setView(destLatLng, 13);
+                } else {
+                    // Báo lỗi cho người dùng nếu Nominatim không tìm thấy toạ độ
+                    const errBox = document.createElement("div");
+                    errBox.style = "background: #fef2f2; color: #991b1b; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-size: 14px;";
+                    errBox.innerHTML = "<i class='fas fa-exclamation-triangle'></i> Hệ thống bản đồ không tìm thấy toạ độ Tỉnh/Thành phố của bạn. Bản đồ sẽ chỉ hiện vị trí của Shipper.";
+                    document.getElementById('customerShippingMap').parentNode.insertBefore(errBox, document.getElementById('customerShippingMap'));
+                }
+                updateShipperLocation();
+                setInterval(updateShipperLocation, 10000);
+            });
+
+            // Fetch Shipper GPS
+            function updateShipperLocation() {
+                fetch('index.php?action=get_shipper_location&id_shipper=<?php echo $od['id_shipper']; ?>')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.lat && data.lng) {
+                            const shipperLatLng = L.latLng(parseFloat(data.lat), parseFloat(data.lng));
+                            
+                            if (shipperMarker) {
+                                shipperMarker.setLatLng(shipperLatLng);
+                            } else {
+                                shipperMarker = L.marker(shipperLatLng, {icon: shipperIcon}).addTo(map).bindPopup("<b>Shipper đang trên đường</b>");
+                            }
+
+                            if (destLatLng) {
+                                if (routeLine) {
+                                    routeLine.setLatLngs([shipperLatLng, destLatLng]);
+                                    if (routeOutline) {
+                                        routeOutline.setLatLngs([shipperLatLng, destLatLng]);
+                                    }
+                                } else {
+                                    routeOutline = L.polyline([shipperLatLng, destLatLng], {
+                                        color: '#ffffff',
+                                        weight: 14,
+                                        opacity: 0.9
+                                    }).addTo(map);
+                                    routeLine = L.polyline([shipperLatLng, destLatLng], {
+                                        color: '#ff7a00',
+                                        weight: 9,
+                                        opacity: 1
+                                    }).addTo(map);
+                                }
+
+                                if (!hasFitted) {
+                                    map.fitBounds(routeLine.getBounds(), {padding: [50, 50]});
+                                    hasFitted = true;
+                                }
+                            }
+                        } else {
+                            console.warn("Chưa có tín hiệu GPS từ Shipper");
+                        }
+                    })
+                    .catch(err => console.error("GPS Fetch Error:", err));
+            }
+            
+            // Fix map render issue inside hidden modal initially
+            setTimeout(() => { map.invalidateSize(); }, 500);
+        }
+    });
+</script>
+<?php endif; ?>
 
 <?php
 $content = ob_get_clean();

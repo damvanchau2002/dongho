@@ -118,6 +118,36 @@ class StoreModel
         return $this->model->themloaisp($name);
     }
 
+    public function updateInventory($id, $qty)
+    {
+        return $this->model->capNhatTonKho($id, $qty);
+    }
+
+    // --- SHIPPER METHODS ---
+    public function getShippers() {
+        return $this->model->getShippers();
+    }
+
+    public function updateShipperLocation($id_shipper, $lat, $lng) {
+        return $this->model->updateShipperLocation($id_shipper, $lat, $lng);
+    }
+
+    public function getShipperLocation($id_shipper) {
+        return $this->model->getShipperLocation($id_shipper);
+    }
+
+    public function getShipperOrders($id_shipper) {
+        return $this->model->getShipperOrders($id_shipper);
+    }
+
+    public function getAvailableOrders() {
+        return $this->model->getAvailableOrders();
+    }
+
+    public function assignShipper($id_dh, $id_shipper) {
+        return $this->model->assignShipper($id_dh, $id_shipper);
+    }
+
     public function updateCategory($id, $name)
     {
         return $this->model->sualoaisp($id, $name);
@@ -141,6 +171,11 @@ class StoreModel
     public function deleteUser($id)
     {
         return $this->model->xoaNguoiDung($id);
+    }
+
+    public function updateUserProfile($id, $ten, $email, $sdt, $diachi)
+    {
+        return $this->model->capNhatThongTinNguoiDung($id, $ten, $email, $sdt, $diachi);
     }
 
     public function getDiscountCode($code)

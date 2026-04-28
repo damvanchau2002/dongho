@@ -134,9 +134,9 @@
 	    </div>
 	    <div class="col-lg-10 col-md-9">
             <!-- Dashboard Stats -->
-            <div class="row">
-                <div class="col">
-                    <div class="stat-card bg-products" style="padding: 15px;">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-xl-5 mb-4 g-3">
+                <div class="col mb-3">
+                    <div class="stat-card bg-products h-100 m-0" style="padding: 20px;">
                         <div class="info">
                             <h3 style="font-size: 1.5rem;"><?= $stats['total_products'] ?></h3>
                             <p style="font-size: 0.8rem;">Sản phẩm</p>
@@ -144,8 +144,8 @@
                         <div class="icon"><i class="fas fa-boxes" style="font-size: 2rem;"></i></div>
                     </div>
                 </div>
-                <div class="col">
-                    <div class="stat-card bg-revenue" style="padding: 15px;">
+                <div class="col mb-3">
+                    <div class="stat-card bg-revenue h-100 m-0" style="padding: 20px;">
                         <div class="info">
                             <h3 style="font-size: 1.5rem;"><?= number_format($stats['revenue_month'], 0, ',', '.') ?>đ</h3>
                             <p style="font-size: 0.8rem;">Doanh thu</p>
@@ -153,8 +153,8 @@
                         <div class="icon"><i class="fas fa-money-bill-wave" style="font-size: 2rem;"></i></div>
                     </div>
                 </div>
-                <div class="col">
-                    <div class="stat-card bg-brands" style="padding: 15px; background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);">
+                <div class="col mb-3">
+                    <div class="stat-card bg-brands h-100 m-0" style="padding: 20px; background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);">
                         <div class="info">
                             <h3 style="font-size: 1.5rem;"><?= number_format($stats['total_profit'] ?? 0, 0, ',', '.') ?>đ</h3>
                             <p style="font-size: 0.8rem;">Lợi nhuận <small>(ước tính)</small></p>
@@ -162,8 +162,8 @@
                         <div class="icon"><i class="fas fa-chart-line" style="font-size: 2rem;"></i></div>
                     </div>
                 </div>
-                <div class="col">
-                    <div class="stat-card bg-orders" style="padding: 15px;">
+                <div class="col mb-3">
+                    <div class="stat-card bg-orders h-100 m-0" style="padding: 20px;">
                         <div class="info">
                             <h3 style="font-size: 1.5rem;"><?= $stats['total_orders'] ?? 0 ?></h3>
                             <p style="font-size: 0.8rem;">Tổng đơn</p>
@@ -171,8 +171,8 @@
                         <div class="icon"><i class="fas fa-shopping-cart" style="font-size: 2rem;"></i></div>
                     </div>
                 </div>
-                <div class="col">
-                    <div class="stat-card bg-pending" style="padding: 15px;">
+                <div class="col mb-3">
+                    <div class="stat-card bg-pending h-100 m-0" style="padding: 20px;">
                         <div class="info">
                             <h3 style="font-size: 1.5rem;"><?= $stats['total_pending_orders'] ?? 0 ?></h3>
                             <p style="font-size: 0.8rem;">Chờ duyệt</p>
@@ -185,19 +185,21 @@
 
             <!-- Charts Section -->
             <div class="row mb-5">
-                <div class="col-md-8">
-                    <div class="card shadow-sm border-0" style="border-radius: 15px;">
+                <div class="col-md-8 mb-4">
+                    <div class="card shadow-sm border-0 h-100" style="border-radius: 15px;">
                         <div class="card-body">
                             <h5 class="card-title font-weight-bold text-secondary mb-4">Biểu đồ Doanh Thu (6 tháng)</h5>
-                            <canvas id="revenueChart" height="100"></canvas>
+                            <div style="height: 300px; width: 100%;">
+                                <canvas id="revenueChart"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="card shadow-sm border-0" style="border-radius: 15px; height: 100%;">
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow-sm border-0 h-100" style="border-radius: 15px;">
                         <div class="card-body d-flex flex-column">
                             <h5 class="card-title font-weight-bold text-secondary mb-4">Trạng thái Đơn hàng</h5>
-                            <div style="position: relative; flex-grow: 1; min-height: 250px; width: 100%; display: flex; justify-content: center;">
+                            <div style="position: relative; flex-grow: 1; height: 300px; width: 100%; display: flex; justify-content: center;">
                                 <canvas id="orderStatusChart"></canvas>
                             </div>
                         </div>
@@ -211,7 +213,9 @@
                     <div class="card shadow-sm border-0" style="border-radius: 15px;">
                         <div class="card-body">
                             <h5 class="card-title font-weight-bold text-secondary mb-4">Top 5 Sản phẩm Bán chạy</h5>
-                            <canvas id="topProductsChart" height="80"></canvas>
+                            <div style="height: 350px; width: 100%;">
+                                <canvas id="topProductsChart"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -251,6 +255,7 @@
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: { display: false }
                 },
@@ -291,7 +296,7 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        position: 'bottom',
+                        position: 'right',
                         labels: { padding: 20 }
                     }
                 }
@@ -314,11 +319,13 @@
                     backgroundColor: 'rgba(54, 162, 235, 0.6)',
                     borderColor: 'rgba(54, 162, 235, 1)',
                     borderWidth: 1,
-                    borderRadius: 6
+                    borderRadius: 6,
+                    maxBarThickness: 60
                 }]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 scales: {
                     y: {
                         beginAtZero: true,

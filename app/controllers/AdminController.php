@@ -355,6 +355,7 @@ class AdminController extends Controller
         $store = new StoreModel();
         $data = $store->categories(); // For sidebar
         $order = $store->orderById($_GET['id']);
+        $shippers = $store->getShippers(); // Get list of shippers
 
         if (!$order) {
             header('Location: index.php?action=quanlydonhang');
@@ -363,7 +364,8 @@ class AdminController extends Controller
 
         $this->renderLegacy('chitietdonhang', [
             'data' => $data,
-            'order' => $order
+            'order' => $order,
+            'shippers' => $shippers
         ]);
     }
 
@@ -378,9 +380,15 @@ class AdminController extends Controller
 
         $id     = (int)($_POST['id_dh'] ?? 0);
         $status = (int)($_POST['trang_thai'] ?? 1);
+        $id_shipper = (int)($_POST['id_shipper'] ?? 0);
 
         if ($id > 0) {
             $store = new StoreModel();
+            
+            // Assign shipper if status is being updated to 2 (Đang giao hàng)
+            if ($status == 2 && $id_shipper > 0) {
+                $store->assignShipper($id, $id_shipper);
+            }
             
             // Lấy thông tin đơn hàng trước khi cập nhật để kiểm tra trạng thái cũ (nếu cần)
             $order = $store->orderById($id);

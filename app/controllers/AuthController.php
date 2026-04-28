@@ -34,7 +34,14 @@ class AuthController extends Controller
                         $_SESSION['tennd'] = $username;
                         $_SESSION['id_nd'] = $userData[0]['id_nd'];
                         $_SESSION['quyennd'] = $userData[0]['quyen_nd'];
-                        header('Location: index.php');
+                        
+                        if ($_SESSION['quyennd'] == 1) {
+                            header('Location: index.php?action=quantri');
+                        } elseif ($_SESSION['quyennd'] == 3) {
+                            header('Location: index.php?action=shipper');
+                        } else {
+                            header('Location: index.php');
+                        }
                         exit;
                     }
                 }
@@ -76,7 +83,14 @@ class AuthController extends Controller
                             $_SESSION['id_nd'] = $userData[0]['id_nd'];
                             $_SESSION['quyennd'] = $userData[0]['quyen_nd'];
                             $_SESSION['success'] = "Đăng nhập bằng Google thành công!";
-                            header('Location: index.php');
+                            
+                            if ($_SESSION['quyennd'] == 1) {
+                                header('Location: index.php?action=quantri');
+                            } elseif ($_SESSION['quyennd'] == 3) {
+                                header('Location: index.php?action=shipper');
+                            } else {
+                                header('Location: index.php');
+                            }
                             exit;
                         } else {
                             // Register new user
@@ -93,7 +107,14 @@ class AuthController extends Controller
                                 $_SESSION['id_nd'] = $newUserData[0]['id_nd'];
                                 $_SESSION['quyennd'] = $newUserData[0]['quyen_nd'];
                                 $_SESSION['success'] = "Đăng ký và Đăng nhập Google thành công!";
-                                header('Location: index.php');
+                                
+                                if ($_SESSION['quyennd'] == 1) {
+                                    header('Location: index.php?action=quantri');
+                                } elseif ($_SESSION['quyennd'] == 3) {
+                                    header('Location: index.php?action=shipper');
+                                } else {
+                                    header('Location: index.php');
+                                }
                                 exit;
                             } else {
                                 $_SESSION['error'] = 'Lỗi tạo tài khoản Google!';
@@ -152,23 +173,89 @@ class AuthController extends Controller
             header('Location: index.php?action=taikhoan');
             exit;
         }
-        
+
         $store = new StoreModel();
-        $userData = $store->loginUser($_SESSION['tennd']);
-        
+
+        // Xử lý cập nhật thông tin cá nhân
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['capnhat_thongtin'])) {
+            if (!SecurityHelper::verifyCsrf($_POST['csrf_token'] ?? '')) {
+                die('CSRF token validation failed');
+            }
+
+            $id     = (int)($_SESSION['id_nd'] ?? 0);
+            $ten    = SecurityHelper::sanitize($_POST['ten_nd']    ?? '');
+            $email  = SecurityHelper::sanitize($_POST['email_nd']  ?? '');
+            $sdt    = SecurityHelper::sanitize($_POST['sdt_nd']    ?? '');
+            $diachi = SecurityHelper::sanitize($_POST['diachi_nd'] ?? '');
+
+            if ($id > 0 && !empty($ten)) {
+                if ($store->updateUserProfile($id, $ten, $email, $sdt, $diachi)) {
+                    $_SESSION['tennd'] = $ten; // Cập nhật tên trong session
+                    $_SESSION['profile_success'] = 'Cập nhật thông tin thành công!';
+                } else {
+                    $_SESSION['profile_error'] = 'Có lỗi xảy ra. Vui lòng thử lại.';
+                }
+            } else {
+                $_SESSION['profile_error'] = 'Họ tên không được để trống.';
+            }
+
+            header('Location: index.php?action=thongtintaikhoan');
+            exit;
+        }
+
+        // Xử lý đổi mật khẩu
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['doi_mat_khau'])) {
+            if (!SecurityHelper::verifyCsrf($_POST['csrf_token'] ?? '')) {
+                die('CSRF token validation failed');
+            }
+
+            $id              = (int)($_SESSION['id_nd'] ?? 0);
+            $matkhau_cu      = $_POST['matkhau_cu']      ?? '';
+            $matkhau_moi     = $_POST['matkhau_moi']     ?? '';
+            $matkhau_xacnhan = $_POST['matkhau_xacnhan'] ?? '';
+
+            if ($id > 0) {
+                $currentUser = $store->getUserById($id);
+                if ($currentUser && SecurityHelper::verifyPassword($matkhau_cu, $currentUser['matkhau_nd'])) {
+                    if (strlen($matkhau_moi) < 6) {
+                        $_SESSION['password_error'] = 'Mật khẩu mới phải có ít nhất 6 ký tự.';
+                    } elseif ($matkhau_moi !== $matkhau_xacnhan) {
+                        $_SESSION['password_error'] = 'Mật khẩu xác nhận không khớp.';
+                    } else {
+                        $newHash = SecurityHelper::hashPassword($matkhau_moi);
+                        $store->updateUserPassword($id, $newHash);
+                        $_SESSION['password_success'] = 'Đổi mật khẩu thành công!';
+                    }
+                } else {
+                    $_SESSION['password_error'] = 'Mật khẩu hiện tại không đúng.';
+                }
+            }
+
+            header('Location: index.php?action=thongtintaikhoan');
+            exit;
+        }
+
+        // Lấy dữ liệu người dùng mới nhất từ DB (sau khi update)
+        $userData = $store->getUserById($_SESSION['id_nd'] ?? 0);
+        if (!$userData) {
+            // Fallback: tìm theo tên đăng nhập
+            $rows = $store->loginUser($_SESSION['tennd']);
+            $userData = $rows[0] ?? null;
+        }
+
         // Cập nhật lại id_nd vào session nếu bị mất
-        if (!isset($_SESSION['id_nd']) && isset($userData[0]['id_nd'])) {
-            $_SESSION['id_nd'] = $userData[0]['id_nd'];
+        if (!isset($_SESSION['id_nd']) && isset($userData['id_nd'])) {
+            $_SESSION['id_nd'] = $userData['id_nd'];
         }
 
         $orders = [];
         if (isset($_SESSION['id_nd'])) {
             $orders = $store->userOrders($_SESSION['id_nd']);
         }
-        
-        // Truyền dữ liệu sang view thông qua hàm renderLegacy
+
+        // Truyền dữ liệu sang view
         $this->renderLegacy('thongtintaikhoan', [
-            'user' => $userData[0],
+            'user'   => $userData,
             'orders' => $orders
         ]);
     }

@@ -97,6 +97,40 @@ class BaseModel
             $db->query("ALTER TABLE quanlynguoidung ADD COLUMN email_nd VARCHAR(255) DEFAULT NULL AFTER ten_nd");
         }
 
+		// Thêm số điện thoại người dùng
+		$checkSdt = $db->query("SHOW COLUMNS FROM quanlynguoidung LIKE 'sdt_nd'");
+		if ($checkSdt && $checkSdt->num_rows === 0) {
+			$db->query("ALTER TABLE quanlynguoidung ADD COLUMN sdt_nd VARCHAR(20) DEFAULT NULL AFTER email_nd");
+		}
+
+		// Thêm địa chỉ người dùng
+		$checkDiachi = $db->query("SHOW COLUMNS FROM quanlynguoidung LIKE 'diachi_nd'");
+		if ($checkDiachi && $checkDiachi->num_rows === 0) {
+			$db->query("ALTER TABLE quanlynguoidung ADD COLUMN diachi_nd VARCHAR(500) DEFAULT NULL AFTER sdt_nd");
+		}
+
+		// Bổ sung GPS và Shipper ID
+		$checkLat = $db->query("SHOW COLUMNS FROM quanlynguoidung LIKE 'lat'");
+		if ($checkLat && $checkLat->num_rows === 0) {
+			$db->query("ALTER TABLE quanlynguoidung ADD COLUMN lat DECIMAL(10,8) DEFAULT NULL");
+			$db->query("ALTER TABLE quanlynguoidung ADD COLUMN lng DECIMAL(11,8) DEFAULT NULL");
+		}
+		
+		$checkIdShipper = $db->query("SHOW COLUMNS FROM donhang LIKE 'id_shipper'");
+		if ($checkIdShipper && $checkIdShipper->num_rows === 0) {
+			$db->query("ALTER TABLE donhang ADD COLUMN id_shipper INT DEFAULT NULL AFTER trang_thai");
+		}
+
+		// Tạo tài khoản Shipper test mặc định nếu chưa có
+		$checkShipper = $db->query("SELECT * FROM quanlynguoidung WHERE ten_nd = 'shipper' LIMIT 1");
+		if ($checkShipper && $checkShipper->num_rows === 0) {
+			$pass = password_hash('123456', PASSWORD_DEFAULT);
+			$db->query("INSERT INTO quanlynguoidung (ten_nd, email_nd, matkhau_nd, quyen_nd) VALUES ('shipper', 'shipper@demo.com', '$pass', 3)");
+		} else {
+            // Cập nhật tài khoản shipper cũ lên quyền 3
+            $db->query("UPDATE quanlynguoidung SET quyen_nd = 3 WHERE ten_nd = 'shipper' AND quyen_nd = 2");
+        }
+
 		// Backward-compat: bổ sung cột flash sale và tồn kho cho bảng sanpham
 		foreach ([
 			"flash_sale_price" => "ALTER TABLE sanpham ADD COLUMN flash_sale_price DECIMAL(20,2) DEFAULT 0",
@@ -497,6 +531,20 @@ class BaseModel
 		$stmt = $this->connect->prepare("DELETE FROM quanlynguoidung WHERE id_nd = ?");
 		if (!$stmt) return false;
 		$stmt->bind_param("i", $id);
+		$res = $stmt->execute();
+		$stmt->close();
+		return $res;
+	}
+
+	/**
+	 * Cập nhật thông tin cá nhân người dùng (tên, email, sdt, địa chỉ)
+	 */
+	public function capNhatThongTinNguoiDung($id, $ten, $email, $sdt, $diachi) {
+		$stmt = $this->connect->prepare(
+			"UPDATE quanlynguoidung SET ten_nd = ?, email_nd = ?, sdt_nd = ?, diachi_nd = ? WHERE id_nd = ?"
+		);
+		if (!$stmt) return false;
+		$stmt->bind_param("ssssi", $ten, $email, $sdt, $diachi, $id);
 		$res = $stmt->execute();
 		$stmt->close();
 		return $res;
@@ -1049,6 +1097,87 @@ class BaseModel
 		$stmt->close();
 		return $res;
 	}
+
+    // ---------------------------------------------------------
+    // SHIPPER & MAP TRACKING METHODS
+    // ---------------------------------------------------------
+
+    public function getShippers() {
+        $stmt = $this->connect->prepare("SELECT id_nd, ten_nd FROM quanlynguoidung WHERE quyen_nd = 3");
+        $shippers = [];
+        if ($stmt) {
+            $stmt->execute();
+            $res = $stmt->get_result();
+            while ($row = $res->fetch_assoc()) {
+                $shippers[] = $row;
+            }
+            $stmt->close();
+        }
+        return $shippers;
+    }
+
+    public function updateShipperLocation($id_shipper, $lat, $lng) {
+        $stmt = $this->connect->prepare("UPDATE quanlynguoidung SET lat = ?, lng = ? WHERE id_nd = ? AND quyen_nd = 2");
+        if ($stmt) {
+            $stmt->bind_param("ddi", $lat, $lng, $id_shipper);
+            $stmt->execute();
+            $stmt->close();
+            return true;
+        }
+        return false;
+    }
+
+    public function getShipperLocation($id_shipper) {
+        $stmt = $this->connect->prepare("SELECT lat, lng FROM quanlynguoidung WHERE id_nd = ? AND quyen_nd = 3 LIMIT 1");
+        if ($stmt) {
+            $stmt->bind_param("i", $id_shipper);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            $stmt->close();
+            return $res->fetch_assoc();
+        }
+        return null;
+    }
+
+    public function getShipperOrders($id_shipper) {
+        $stmt = $this->connect->prepare("SELECT * FROM donhang WHERE id_shipper = ? ORDER BY ngay_dat DESC");
+        $orders = [];
+        if ($stmt) {
+            $stmt->bind_param("i", $id_shipper);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            while ($row = $res->fetch_assoc()) {
+                $orders[] = $row;
+            }
+            $stmt->close();
+        }
+        return $orders;
+    }
+
+    public function getAvailableOrders() {
+        $stmt = $this->connect->prepare("SELECT * FROM donhang WHERE trang_thai = 2 AND (id_shipper IS NULL OR id_shipper = 0) ORDER BY ngay_dat DESC");
+        $orders = [];
+        if ($stmt) {
+            $stmt->execute();
+            $res = $stmt->get_result();
+            while ($row = $res->fetch_assoc()) {
+                $orders[] = $row;
+            }
+            $stmt->close();
+        }
+        return $orders;
+    }
+
+    public function assignShipper($id_dh, $id_shipper) {
+        $stmt = $this->connect->prepare("UPDATE donhang SET id_shipper = ? WHERE id_dh = ?");
+        if ($stmt) {
+            $stmt->bind_param("ii", $id_shipper, $id_dh);
+            $stmt->execute();
+            $stmt->close();
+            return true;
+        }
+        return false;
+    }
 
 }
 ?>

@@ -235,12 +235,33 @@ $pendingInfo = ($pendingOrderId && isset($_SESSION[$pendingOrderId])) ? $_SESSIO
                     <?php endif; ?>
 
                     <?php
-                    $tenNN    = htmlspecialchars($pendingInfo['tennn'] ?? '', ENT_QUOTES);
-                    $emailNN  = htmlspecialchars($pendingInfo['emailnn'] ?? '', ENT_QUOTES);
-                    $sdtNN    = htmlspecialchars($pendingInfo['sdtnn'] ?? '', ENT_QUOTES);
-                    $diachiNN = htmlspecialchars($pendingInfo['diachinn'] ?? '', ENT_QUOTES);
+                    // Auto-fill: lấy thông tin profile người dùng khi không có đơn pending
+                    $userProfile = null;
+                    if ($isLoggedIn && isset($_SESSION['id_nd'])) {
+                        $storeProfile = new StoreModel();
+                        $userProfile  = $storeProfile->getUserById((int)$_SESSION['id_nd']);
+                    }
+
+                    $tenNN    = htmlspecialchars($pendingInfo['tennn']    ?? ($userProfile['ten_nd']    ?? ''), ENT_QUOTES);
+                    $emailNN  = htmlspecialchars($pendingInfo['emailnn']  ?? ($userProfile['email_nd']  ?? ''), ENT_QUOTES);
+                    $sdtNN    = htmlspecialchars($pendingInfo['sdtnn']    ?? ($userProfile['sdt_nd']    ?? ''), ENT_QUOTES);
+                    $diachiNN = htmlspecialchars($pendingInfo['diachinn'] ?? ($userProfile['diachi_nd'] ?? ''), ENT_QUOTES);
                     $ghichuNN = htmlspecialchars($pendingInfo['ghichunn'] ?? '', ENT_QUOTES);
+                    $autoFilled = $isLoggedIn && $userProfile && empty($pendingInfo);
                     ?>
+
+                    <?php if ($autoFilled && (!empty($sdtNN) || !empty($diachiNN))): ?>
+                    <div class="login-notice" style="background:#f0fdf4;border-color:#86efac;color:#166534;margin-bottom:14px">
+                        <i class="fas fa-magic"></i>
+                        Thông tin đã được điền tự động từ hồ sơ của bạn.
+                        <a href="index.php?action=thongtintaikhoan" style="color:#166534;font-weight:700;margin-left:4px">Cập nhật hồ sơ →</a>
+                    </div>
+                    <?php elseif ($isLoggedIn && $userProfile && empty($userProfile['sdt_nd']) && empty($userProfile['diachi_nd'])): ?>
+                    <div class="login-notice" style="background:#fffbeb;border-color:#fcd34d;color:#92400e;margin-bottom:14px">
+                        <i class="fas fa-lightbulb"></i>
+                        Lưu địa chỉ & SĐT vào <a href="index.php?action=thongtintaikhoan" style="color:#92400e;font-weight:700">hồ sơ tài khoản</a> để điền tự động cho lần sau!
+                    </div>
+                    <?php endif; ?>
                     <div class="form-group">
                         <label class="form-label">Họ và tên *</label>
                         <input type="text" class="form-input" name="tennguoinhan" placeholder="Nguyễn Văn A" value="<?= $tenNN ?>" required>

@@ -22,9 +22,18 @@
             <i class="fas fa-list"></i> Danh sách hãng
         </a>
         <div class="brand-list">
-            <?php if (isset($data) && is_array($data)): ?>
+            <?php 
+                $hasCategories = false;
+                if (isset($data) && is_array($data) && count($data) > 0) {
+                    $firstElement = reset($data);
+                    if (is_array($firstElement) && isset($firstElement['ten_loaisp'])) {
+                        $hasCategories = true;
+                    }
+                }
+            ?>
+            <?php if ($hasCategories): ?>
                 <?php foreach ($data as $value): 
-                    if($value['ten_loaisp'] == 'THÊM') continue;
+                    if(isset($value['ten_loaisp']) && $value['ten_loaisp'] == 'THÊM') continue;
                 ?>
                     <a class="nav-link <?= (isset($_GET['idloai']) && $_GET['idloai'] == $value['id_loaisp']) ? 'active' : '' ?>" 
                        href="index.php?action=quanlysanpham&idloai=<?php echo $value['id_loaisp'] ?>">

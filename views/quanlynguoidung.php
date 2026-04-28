@@ -19,6 +19,7 @@
         }
         .role-admin { background: #fee2e2; color: #ef4444; }
         .role-user { background: #e0f2fe; color: #0284c7; }
+        .role-shipper { background: #fef3c7; color: #d97706; }
         .user-avatar {
             width: 40px;
             height: 40px;
@@ -98,10 +99,11 @@
                                             <input type="hidden" name="id_nd" value="<?= $u['id_nd'] ?>">
                                             <select name="quyen_nd" class="form-control form-control-sm mr-2" style="width: 130px;" onchange="this.form.submit()">
                                                 <option value="0" <?= $u['quyen_nd'] == 0 ? 'selected' : '' ?>>Khách hàng</option>
+                                                <option value="3" <?= $u['quyen_nd'] == 3 ? 'selected' : '' ?>>Shipper</option>
                                                 <option value="1" <?= $u['quyen_nd'] == 1 ? 'selected' : '' ?>>Quản trị viên</option>
                                             </select>
-                                            <span class="role-badge <?= $u['quyen_nd'] == 1 ? 'role-admin' : 'role-user' ?>">
-                                                <?= $u['quyen_nd'] == 1 ? 'Admin' : 'User' ?>
+                                            <span class="role-badge <?= $u['quyen_nd'] == 1 ? 'role-admin' : ($u['quyen_nd'] == 3 ? 'role-shipper' : 'role-user') ?>">
+                                                <?= $u['quyen_nd'] == 1 ? 'Admin' : ($u['quyen_nd'] == 3 ? 'Shipper' : 'User') ?>
                                             </span>
                                         </form>
                                     </td>

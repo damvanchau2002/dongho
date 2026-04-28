@@ -96,6 +96,14 @@ class App
         // Momo callbacks
         $this->router->get('/momo_post', ['CheckoutController', 'momo_post']);
         $this->router->post('/momo_ipn', ['CheckoutController', 'momo_post']);
+
+        // Shipper routes
+        $this->router->get('/shipper', ['ShipperController', 'index']);
+        $this->router->post('/shipper_accept_order', ['ShipperController', 'acceptOrder']);
+        $this->router->post('/shipper_update_status', ['ShipperController', 'updateStatus']);
+        $this->router->post('/shipper_update_location', ['ShipperController', 'updateLocation']);
+        $this->router->get('/get_shipper_location', ['ShipperController', 'getLocation']);
+        $this->router->get('/shipper_view_map', ['ShipperController', 'viewMap']);
     }
 
     public function run()
