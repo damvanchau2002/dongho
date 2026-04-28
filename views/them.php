@@ -95,6 +95,14 @@
                     </div>
 
                     <div class="mb-3">
+                        <label class="form-label">Số lượng tồn kho <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" name="so_luong_ton" id="so_luong_ton" required
+                            min="0" step="1" placeholder="VD: 100"
+                            value="<?= isset($_POST['so_luong_ton']) ? (int)$_POST['so_luong_ton'] : 100 ?>">
+                        <div class="invalid-feedback">Số lượng tồn không hợp lệ</div>
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label">Hình ảnh sản phẩm</label>
                         <input type="file" class="form-control" name="lha" id="lha" accept="image/*" onchange="previewImage(this)">
                         <img id="preview" class="preview-image mt-2" alt="Preview">

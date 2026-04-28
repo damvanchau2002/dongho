@@ -86,6 +86,7 @@ class AdminController extends Controller
             $m = SecurityHelper::sanitize($_POST['mtsp'] ?? '');
             $li = (int)($_POST['idlsp'] ?? 0);
             $n = $_POST['ngaynhap'] ?? date('Y-m-d');
+            $slt = (int)($_POST['so_luong_ton'] ?? 0);
 
             if (empty($t)) {
                 $error = 'Tên sản phẩm không được để trống.';
@@ -122,7 +123,7 @@ class AdminController extends Controller
             }
 
             if ($error === null) {
-                $store->createProduct($t, $l, $g, $n, $li, $m);
+                $store->createProduct($t, $l, $g, $n, $li, $m, $slt);
                 header('Location: index.php?action=quantri');
                 exit;
             }
@@ -158,6 +159,7 @@ class AdminController extends Controller
             $m = SecurityHelper::sanitize($_POST['mtsp'] ?? '');
             $li = (int)($_POST['idlsp'] ?? 0);
             $n = date('Y-m-d');
+            $slt = (int)($_POST['so_luong_ton'] ?? 0);
 
             if (empty($t)) {
                 $error = 'Tên sản phẩm không được để trống.';
@@ -202,7 +204,7 @@ class AdminController extends Controller
             }
 
             if ($error === null) {
-                $store->updateProduct($_GET['id_sua'], $t, $l, $g, $n, $li, $m);
+                $store->updateProduct($_GET['id_sua'], $t, $l, $g, $n, $li, $m, $slt);
                 $store->updateFlashSale($_GET['id_sua'], $flash_price, $flash_end);
                 header('Location: index.php?action=quantri');
                 exit;

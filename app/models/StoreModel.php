@@ -103,14 +103,14 @@ class StoreModel
         return $this->model->capnhatmatkhau($userId, $passwordHash);
     }
 
-    public function createProduct($ten, $link_ha, $gia, $ngay, $id_l, $mota)
+    public function createProduct($ten, $link_ha, $gia, $ngay, $id_l, $mota, $so_luong_ton = 0)
     {
-        return $this->model->themsanpham($ten, $link_ha, $gia, $ngay, $id_l, $mota);
+        return $this->model->themsanpham($ten, $link_ha, $gia, $ngay, $id_l, $mota, $so_luong_ton);
     }
 
-    public function updateProduct($id, $ten, $link_ha, $gia, $ngay, $id_l, $mota)
+    public function updateProduct($id, $ten, $link_ha, $gia, $ngay, $id_l, $mota, $so_luong_ton = 0)
     {
-        return $this->model->suasanpham($id, $ten, $link_ha, $gia, $ngay, $id_l, $mota);
+        return $this->model->suasanpham($id, $ten, $link_ha, $gia, $ngay, $id_l, $mota, $so_luong_ton);
     }
 
     public function createCategory($name)

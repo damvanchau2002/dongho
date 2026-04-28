@@ -156,15 +156,24 @@ $comments = $commentModel->getCommentsByProductId($id_sp);
                 <div class="qty-row">
                     <div class="qty-box">
                         <button type="button" class="qty-btn" onclick="let i=document.getElementById('qtyInput');if(i.value>1)i.value--">−</button>
-                        <input type="number" class="qty-input" id="qtyInput" min="1" value="1" name="quantity[<?= $id_sp ?>]">
-                        <button type="button" class="qty-btn" onclick="document.getElementById('qtyInput').value++">+</button>
+                        <input type="number" class="qty-input" id="qtyInput" min="1" max="<?= $proInfo['so_luong_ton'] ?>" value="1" name="quantity[<?= $id_sp ?>]">
+                        <button type="button" class="qty-btn" onclick="let i=document.getElementById('qtyInput');if(i.value < <?= $proInfo['so_luong_ton'] ?>)i.value++">+</button>
                     </div>
-                    <span style="font-size:13px;color:#94a3b8">Còn hàng</span>
+                    <?php if ($proInfo['so_luong_ton'] > 0): ?>
+                        <span style="font-size:13px;color:#94a3b8">Còn <?= $proInfo['so_luong_ton'] ?> sản phẩm</span>
+                    <?php else: ?>
+                        <span style="font-size:13px;color:#e53e3e;font-weight:700">Đã hết hàng</span>
+                    <?php endif; ?>
                 </div>
 
                 <div class="pd-actions">
-                    <button type="submit" class="btn-addcart"><i class="fas fa-cart-plus"></i> Thêm vào giỏ</button>
-                    <button type="button" class="btn-buynow" onclick="document.getElementById('addCartForm').submit()"><i class="fas fa-bolt"></i> Mua ngay</button>
+                    <?php if ($proInfo['so_luong_ton'] > 0): ?>
+                        <button type="submit" class="btn-addcart"><i class="fas fa-cart-plus"></i> Thêm vào giỏ</button>
+                        <button type="button" class="btn-buynow" onclick="document.getElementById('addCartForm').submit()"><i class="fas fa-bolt"></i> Mua ngay</button>
+                    <?php else: ?>
+                        <button type="button" class="btn-addcart" disabled style="background:#e2e8f0;border-color:#e2e8f0;color:#94a3b8;cursor:not-allowed">Hết hàng</button>
+                        <button type="button" class="btn-buynow" disabled style="background:#e2e8f0;color:#94a3b8;cursor:not-allowed">Hết hàng</button>
+                    <?php endif; ?>
                 </div>
             </form>
         </div>

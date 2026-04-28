@@ -110,7 +110,8 @@
                                 <th scope="col" width="10%">GIÁ ($)</th>
                                 <th scope="col" width="10%">THƯƠNG HIỆU</th>
                                 <th scope="col" width="10%">NGÀY NHẬP</th>
-                                <th scope="col" width="25%">MÔ TẢ</th>
+                                <th scope="col" width="10%">TỒN KHO</th>
+                                <th scope="col" width="15%">MÔ TẢ</th>
                                 <th scope="col" width="15%" class="text-center">THAO TÁC</th>
                             </tr>
                         </thead>
@@ -145,6 +146,13 @@
                                     <td><span class="text-primary font-weight-bold"><?php echo number_format($value['gia_sp'], 0, ',', '.'); ?>đ</span></td>
                                     <td><span class="badge bg-light text-dark border"><?php echo $value['ten_loaisp']; ?></span></td>
                                     <td><?php echo date('d/m/Y', strtotime($value['ngaynhap_sp'])); ?></td>
+                                    <td>
+                                        <?php if ($value['so_luong_ton'] > 0): ?>
+                                            <span class="badge bg-success text-white"><?php echo $value['so_luong_ton']; ?></span>
+                                        <?php else: ?>
+                                            <span class="badge bg-danger text-white">Hết hàng</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td class="text-muted small"><?php echo $value['mota_sp']; ?></td>
                                     <td class="text-center">
                                         <div class="action-links justify-content-center">

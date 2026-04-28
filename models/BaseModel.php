@@ -97,10 +97,11 @@ class BaseModel
             $db->query("ALTER TABLE quanlynguoidung ADD COLUMN email_nd VARCHAR(255) DEFAULT NULL AFTER ten_nd");
         }
 
-		// Backward-compat: bổ sung cột flash sale cho bảng sanpham
+		// Backward-compat: bổ sung cột flash sale và tồn kho cho bảng sanpham
 		foreach ([
 			"flash_sale_price" => "ALTER TABLE sanpham ADD COLUMN flash_sale_price DECIMAL(20,2) DEFAULT 0",
-			"flash_sale_end"   => "ALTER TABLE sanpham ADD COLUMN flash_sale_end DATETIME NULL"
+			"flash_sale_end"   => "ALTER TABLE sanpham ADD COLUMN flash_sale_end DATETIME NULL",
+			"so_luong_ton"     => "ALTER TABLE sanpham ADD COLUMN so_luong_ton INT DEFAULT 0"
 		] as $col => $alter) {
 			$check = $db->query("SHOW COLUMNS FROM sanpham LIKE '{$col}'");
 			if ($check && $check->num_rows === 0) {
@@ -410,12 +411,12 @@ class BaseModel
 		return $data;
 	}
 	
-	public function themsanpham($ten, $link_ha, $gia, $ngay, $id_l, $mota){
-		$stmt = $this->connect->prepare("INSERT INTO sanpham (ten_sp, hinhanh_sp, gia_sp, ngaynhap_sp, id_loaisp, mota_sp) VALUES (?, ?, ?, ?, ?, ?)");
+	public function themsanpham($ten, $link_ha, $gia, $ngay, $id_l, $mota, $so_luong_ton = 0){
+		$stmt = $this->connect->prepare("INSERT INTO sanpham (ten_sp, hinhanh_sp, gia_sp, ngaynhap_sp, id_loaisp, mota_sp, so_luong_ton) VALUES (?, ?, ?, ?, ?, ?, ?)");
 		if (!$stmt) {
 			return false;
 		}
-		$stmt->bind_param("ssdsss", $ten, $link_ha, $gia, $ngay, $id_l, $mota);
+		$stmt->bind_param("ssdsssi", $ten, $link_ha, $gia, $ngay, $id_l, $mota, $so_luong_ton);
 		$result = $stmt->execute();
 		$stmt->close();
 		return $result;
@@ -658,11 +659,19 @@ class BaseModel
 		$stmt = $this->connect->prepare("INSERT INTO chitietdonhang (id_dh, id_sp, so_luong, gia_ban) VALUES (?, ?, ?, ?)");
 		if (!$stmt) return false;
 
+		$updateStmt = $this->connect->prepare("UPDATE sanpham SET so_luong_ton = GREATEST(0, so_luong_ton - ?) WHERE id_sp = ?");
+
 		foreach ($items as $item) {
 			$stmt->bind_param("iiid", $orderId, $item['id_sp'], $item['so_luong'], $item['gia_ban']);
 			$stmt->execute();
+
+			if ($updateStmt) {
+				$updateStmt->bind_param("ii", $item['so_luong'], $item['id_sp']);
+				$updateStmt->execute();
+			}
 		}
 		$stmt->close();
+		if ($updateStmt) $updateStmt->close();
 		return true;
 	}
 
@@ -751,15 +760,15 @@ class BaseModel
 		return $data;
 	}
 	
-	public function suasanpham($id_sua, $ten, $link_ha, $gia, $ngay, $id_l, $mota){
+	public function suasanpham($id_sua, $ten, $link_ha, $gia, $ngay, $id_l, $mota, $so_luong_ton = 0){
 		if (!SecurityHelper::validateInteger($id_sua)) {
 			return false;
 		}
-		$stmt = $this->connect->prepare("UPDATE sanpham SET ten_sp = ?, hinhanh_sp = ?, gia_sp = ?, ngaynhap_sp = ?, id_loaisp = ?, mota_sp = ? WHERE id_sp = ?");
+		$stmt = $this->connect->prepare("UPDATE sanpham SET ten_sp = ?, hinhanh_sp = ?, gia_sp = ?, ngaynhap_sp = ?, id_loaisp = ?, mota_sp = ?, so_luong_ton = ? WHERE id_sp = ?");
 		if (!$stmt) {
 			return false;
 		}
-		$stmt->bind_param("ssdsssi", $ten, $link_ha, $gia, $ngay, $id_l, $mota, $id_sua);
+		$stmt->bind_param("ssdsssii", $ten, $link_ha, $gia, $ngay, $id_l, $mota, $so_luong_ton, $id_sua);
 		$result = $stmt->execute();
 		$stmt->close();
 		return $result;

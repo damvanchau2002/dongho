@@ -79,6 +79,13 @@
                         </div>
                     </div>
 
+                    <div class="mb-3">
+                        <label class="form-label">Số lượng tồn kho <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" name="so_luong_ton" required
+                            min="0" step="1" placeholder="VD: 100"
+                            value="<?php echo (isset($data2[0]['so_luong_ton'])) ? (int)$data2[0]['so_luong_ton'] : 0; ?>">
+                    </div>
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label text-danger font-weight-bold"><i class="fas fa-bolt"></i> Giá Flash Sale (để trống nếu không giảm)</label>
