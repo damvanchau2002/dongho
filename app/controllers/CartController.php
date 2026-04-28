@@ -84,6 +84,10 @@ class CartController extends Controller
                     }
 
                     if (isset($_POST['order_click'])) {
+                        if (!isset($_SESSION['id_nd'])) {
+                            header('Location: index.php?action=taikhoan&return_url=' . urlencode('index.php?action=giohang'));
+                            exit;
+                        }
                         $orderId = $this->generateOrderId();
                         $store   = new StoreModel();
 
@@ -139,6 +143,9 @@ class CartController extends Controller
                             'ghichu_nn' => SecurityHelper::sanitize($_POST['ghichunguoinhan']?? ''),
                             'tong_tien' => $totalMoney,
                             'giam_gia'  => $discountAmount,
+                            'province_code' => SecurityHelper::sanitize($_POST['province_code'] ?? ''),
+                            'ward_code'     => SecurityHelper::sanitize($_POST['ward_code'] ?? ''),
+                            'street_part'   => SecurityHelper::sanitize($_POST['street_part'] ?? ''),
                         ];
 
                         $dbOrderId = $store->createOrder($orderData, $items);
@@ -151,6 +158,9 @@ class CartController extends Controller
                                 'diachinn' => $orderData['diachi_nn'],
                                 'ghichunn' => $orderData['ghichu_nn'],
                                 'tongtien' => $orderData['tong_tien'],
+                                'province_code' => $_POST['province_code'] ?? '',
+                                'ward_code'     => $_POST['ward_code'] ?? '',
+                                'street_part'   => $_POST['street_part'] ?? '',
                             ];
                             $_SESSION['ma_don_hang'] = $orderId;
                             // Không xóa giỏ hàng tại đây.

@@ -332,6 +332,9 @@ ob_start();
                 <!-- LOGIN FORM -->
                 <form id="authLoginForm" class="auth-form active" method="post">
                     <input type="hidden" name="csrf_token" value="<?php echo SecurityHelper::csrfToken(); ?>">
+                    <?php if (isset($_GET['return_url'])): ?>
+                        <input type="hidden" name="return_url" value="<?php echo htmlspecialchars($_GET['return_url']); ?>">
+                    <?php endif; ?>
                     
                     <div class="input-group">
                         <label>Tên đăng nhập</label>
@@ -379,6 +382,9 @@ ob_start();
                 <!-- REGISTER FORM -->
                 <form id="authRegForm" class="auth-form" method="post">
                     <input type="hidden" name="csrf_token" value="<?php echo SecurityHelper::csrfToken(); ?>">
+                    <?php if (isset($_GET['return_url'])): ?>
+                        <input type="hidden" name="return_url" value="<?php echo htmlspecialchars($_GET['return_url']); ?>">
+                    <?php endif; ?>
                     
                     <div class="input-group">
                         <label>Tên đăng nhập</label>
@@ -440,6 +446,14 @@ function handleCredentialResponse(response) {
     csrfInput.name = 'csrf_token';
     csrfInput.value = '<?php echo SecurityHelper::csrfToken(); ?>';
     form.appendChild(csrfInput);
+
+    <?php if (isset($_GET['return_url'])): ?>
+    const returnUrlInput = document.createElement('input');
+    returnUrlInput.type = 'hidden';
+    returnUrlInput.name = 'return_url';
+    returnUrlInput.value = '<?php echo htmlspecialchars($_GET['return_url']); ?>';
+    form.appendChild(returnUrlInput);
+    <?php endif; ?>
 
     document.body.appendChild(form);
     form.submit();

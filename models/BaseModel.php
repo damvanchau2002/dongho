@@ -48,6 +48,34 @@ class BaseModel
 			)
 		");
 
+		// Bảng Tỉnh/Thành phố
+		$db->query("
+			CREATE TABLE IF NOT EXISTS provinces (
+				id            BIGINT AUTO_INCREMENT PRIMARY KEY,
+				province_code VARCHAR(50) NOT NULL UNIQUE,
+				name          VARCHAR(255) NOT NULL,
+				short_name    VARCHAR(255) NULL,
+				code          VARCHAR(10) NULL,
+				place_type    VARCHAR(100) NULL,
+				country_id    INT DEFAULT 237,
+				created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+				updated_at    DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+			)
+		");
+
+		// Bảng Phường/Xã
+		$db->query("
+			CREATE TABLE IF NOT EXISTS wards (
+				id            BIGINT AUTO_INCREMENT PRIMARY KEY,
+				ward_code     VARCHAR(50) NOT NULL UNIQUE,
+				name          VARCHAR(255) NOT NULL,
+				province_code VARCHAR(50) NOT NULL,
+				created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+				updated_at    DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+				INDEX (province_code)
+			)
+		");
+
 		// Bảng đơn hàng
 		$db->query("
 			CREATE TABLE IF NOT EXISTS donhang (
@@ -64,7 +92,10 @@ class BaseModel
 				ngay_dat                DATETIME DEFAULT CURRENT_TIMESTAMP,
 				trang_thai              INT DEFAULT 1,
 				ly_do_huy               TEXT DEFAULT NULL,
-				phuong_thuc_thanh_toan  VARCHAR(50) DEFAULT 'COD'
+				phuong_thuc_thanh_toan  VARCHAR(50) DEFAULT 'COD',
+				province_code           VARCHAR(50) DEFAULT NULL,
+				ward_code               VARCHAR(50) DEFAULT NULL,
+				street_part             VARCHAR(255) DEFAULT NULL
 			)
 		");
 
@@ -73,6 +104,9 @@ class BaseModel
 			"giam_gia"               => "ALTER TABLE donhang ADD COLUMN giam_gia DECIMAL(20,2) DEFAULT 0 AFTER tong_tien",
 			"ly_do_huy"              => "ALTER TABLE donhang ADD COLUMN ly_do_huy TEXT DEFAULT NULL AFTER trang_thai",
 			"phuong_thuc_thanh_toan" => "ALTER TABLE donhang ADD COLUMN phuong_thuc_thanh_toan VARCHAR(50) DEFAULT 'COD' AFTER ly_do_huy",
+			"province_code"          => "ALTER TABLE donhang ADD COLUMN province_code VARCHAR(50) DEFAULT NULL",
+			"ward_code"              => "ALTER TABLE donhang ADD COLUMN ward_code VARCHAR(50) DEFAULT NULL",
+			"street_part"            => "ALTER TABLE donhang ADD COLUMN street_part VARCHAR(255) DEFAULT NULL",
 		] as $col => $alter) {
 			$check = $db->query("SHOW COLUMNS FROM donhang LIKE '{$col}'");
 			if ($check && $check->num_rows === 0) {
@@ -196,6 +230,47 @@ class BaseModel
             )
         ");
     }
+
+	public function getAllProvinces() {
+		$stmt = $this->connect->prepare("SELECT province_code as code, name FROM provinces ORDER BY name ASC");
+		$stmt->execute();
+		$res = $stmt->get_result();
+		$data = [];
+		while ($row = $res->fetch_assoc()) $data[] = $row;
+		$stmt->close();
+		return $data;
+	}
+
+	public function getWardsByProvince($provinceCode) {
+		$stmt = $this->connect->prepare("SELECT ward_code as code, name FROM wards WHERE province_code = ? ORDER BY name ASC");
+		$stmt->bind_param("s", $provinceCode);
+		$stmt->execute();
+		$res = $stmt->get_result();
+		$data = [];
+		while ($row = $res->fetch_assoc()) $data[] = $row;
+		$stmt->close();
+		return $data;
+	}
+
+	public function getProvinceByCode($code) {
+		$stmt = $this->connect->prepare("SELECT * FROM provinces WHERE province_code = ? LIMIT 1");
+		$stmt->bind_param("s", $code);
+		$stmt->execute();
+		$res = $stmt->get_result();
+		$data = $res->fetch_assoc();
+		$stmt->close();
+		return $data;
+	}
+
+	public function getWardByCode($code) {
+		$stmt = $this->connect->prepare("SELECT * FROM wards WHERE ward_code = ? LIMIT 1");
+		$stmt->bind_param("s", $code);
+		$stmt->execute();
+		$res = $stmt->get_result();
+		$data = $res->fetch_assoc();
+		$stmt->close();
+		return $data;
+	}
 
 	public function ketnoi(){
 		// Sử dụng kết nối tập trung từ Database core nếu có
@@ -695,11 +770,28 @@ class BaseModel
 	}
 
 	public function taoDonHang($data) {
-		$stmt = $this->connect->prepare("INSERT INTO donhang (ma_dh, id_nd, ten_nguoinhan, email_nguoinhan, sdt_nguoinhan, diachi_nguoinhan, ghichu_nguoinhan, tong_tien, giam_gia) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+		$stmt = $this->connect->prepare("INSERT INTO donhang (ma_dh, id_nd, ten_nguoinhan, email_nguoinhan, sdt_nguoinhan, diachi_nguoinhan, ghichu_nguoinhan, tong_tien, giam_gia, province_code, ward_code, street_part) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 		if (!$stmt) return false;
 
 		$giam_gia = $data['giam_gia'] ?? 0;
-		$stmt->bind_param("sisssssdd", $data['ma_dh'], $data['id_nd'], $data['ten_nn'], $data['email_nn'], $data['sdt_nn'], $data['diachi_nn'], $data['ghichu_nn'], $data['tong_tien'], $giam_gia);
+		$province_code = $data['province_code'] ?? null;
+		$ward_code     = $data['ward_code'] ?? null;
+		$street_part   = $data['street_part'] ?? null;
+
+		$stmt->bind_param("sisssssddsss", 
+			$data['ma_dh'], 
+			$data['id_nd'], 
+			$data['ten_nn'], 
+			$data['email_nn'], 
+			$data['sdt_nn'], 
+			$data['diachi_nn'], 
+			$data['ghichu_nn'], 
+			$data['tong_tien'], 
+			$giam_gia,
+			$province_code,
+			$ward_code,
+			$street_part
+		);
 		if ($stmt->execute()) {
 			$orderId = $this->connect->insert_id;
 			$stmt->close();

@@ -6,10 +6,23 @@ class HomeController extends Controller
     {
         $store = new StoreModel();
         $data = $store->categories();
+        
+        $limit_new = 8;
+        $page_new = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        if ($page_new < 1) $page_new = 1;
+        
         $data1 = $store->products();
         $spnoibat = $store->featuredProducts();
+        
         $spmoinhat = $store->newestProducts();
-        $flash_sale_products = $store->flashSaleProducts(); // Lấy sp flash sale
+        $total_new = count($spmoinhat);
+        $total_pages_new = ceil($total_new / $limit_new);
+        if ($page_new > $total_pages_new && $total_pages_new > 0) $page_new = $total_pages_new;
+        
+        $offset_new = ($page_new - 1) * $limit_new;
+        $paginated_spmoinhat = array_slice($spmoinhat, $offset_new, $limit_new);
+
+        $flash_sale_products = $store->flashSaleProducts();
         $data2 = null;
 
         if (isset($_GET['idloai'])) {
@@ -40,8 +53,28 @@ class HomeController extends Controller
             'data2' => $data2,
             'spnoibat' => $spnoibat,
             'spmoinhat' => $spmoinhat,
+            'paginated_spmoinhat' => $paginated_spmoinhat,
+            'total_pages_new' => $total_pages_new,
             'flash_sale_products' => $flash_sale_products,
-            'banners' => $banners
+            'banners' => $banners,
+            'page_new' => $page_new
         ]);
+    }
+
+    public function getProvinces() {
+        header('Content-Type: application/json');
+        $store = new StoreModel();
+        $provinces = $store->getAllProvinces();
+        echo json_encode($provinces);
+        exit;
+    }
+
+    public function getWards() {
+        header('Content-Type: application/json');
+        $provinceCode = $_GET['province_code'] ?? '';
+        $store = new StoreModel();
+        $wards = $store->getWardsByProvince($provinceCode);
+        echo json_encode($wards);
+        exit;
     }
 }

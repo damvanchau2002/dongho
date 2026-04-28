@@ -277,8 +277,38 @@ $pendingInfo = ($pendingOrderId && isset($_SESSION[$pendingOrderId])) ? $_SESSIO
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Địa chỉ nhận hàng *</label>
-                        <input type="text" class="form-input" name="diachinguoinhan" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/TP" value="<?= $diachiNN ?>" required>
+                        <label class="form-label">Số nhà, tên đường *</label>
+                        <input type="text" class="form-input" id="cart_street" placeholder="Ví dụ: 123 Đường ABC" required>
+                    </div>
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label class="form-label">Tỉnh / Thành phố *</label>
+                            <select class="form-input" id="cart_province" required>
+                                <option value="">-- Chọn Tỉnh/TP --</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="display:none">
+                            <label class="form-label">Quận / Huyện</label>
+                            <select class="form-input" id="cart_district">
+                                <option value="">-- Chọn Quận/Huyện --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Phường / Xã *</label>
+                            <select class="form-input" id="cart_ward" required>
+                                <option value="">-- Chọn Phường/Xã --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Hidden field for full address -->
+                    <input type="hidden" name="diachinguoinhan" id="cart_full_addr" value="<?= $diachiNN ?>">
+                    <input type="hidden" name="province_code" id="cart_province_code" value="">
+                    <input type="hidden" name="ward_code" id="cart_ward_code" value="">
+                    <input type="hidden" name="street_part" id="cart_street_part" value="">
+                    
+                    <div id="cart_preview" style="display:none; background:#f8fafc; padding:12px; border-radius:10px; margin-bottom:14px; border:1.5px dashed #e2e8f0; align-items:center; gap:10px;">
+                        <i class="fas fa-map-marker-alt" style="color:#e53e3e"></i>
+                        <span id="cart_preview_text" style="font-size:13px; color:#475569; font-weight:500;"></span>
                     </div>
                     <div class="form-group" style="margin-bottom:0">
                         <label class="form-label">Ghi chú (tuỳ chọn)</label>
@@ -331,9 +361,15 @@ $pendingInfo = ($pendingOrderId && isset($_SESSION[$pendingOrderId])) ? $_SESSIO
                     </div>
 
                     <input type="hidden" name="totalmoney" value="<?= $total_money ?>">
-                    <button type="submit" name="order_click" value="1" class="btn-checkout<?= !isset($data_cart) ? ' disabled' : '' ?>" <?= !isset($data_cart) ? 'disabled' : '' ?>>
-                        <i class="fas fa-lock"></i> Đặt hàng & Thanh toán
-                    </button>
+                    <?php if (!isset($_SESSION['id_nd'])): ?>
+                        <a href="index.php?action=taikhoan&return_url=<?= urlencode('index.php?action=giohang') ?>" class="btn-checkout" style="text-decoration:none; display:flex; align-items:center; justify-content:center; background:#4f46e5;">
+                            <i class="fas fa-sign-in-alt"></i> Đăng nhập để thanh toán
+                        </a>
+                    <?php else: ?>
+                        <button type="submit" name="order_click" value="1" class="btn-checkout<?= empty($data_cart) ? ' disabled' : '' ?>" <?= empty($data_cart) ? 'disabled' : '' ?>>
+                            <i class="fas fa-lock"></i> Đặt hàng & Thanh toán
+                        </button>
+                    <?php endif; ?>
                     <div class="secure-note"><i class="fas fa-shield-alt"></i> Thanh toán bảo mật & mã hoá SSL</div>
                 </div>
             </div>
@@ -343,12 +379,33 @@ $pendingInfo = ($pendingOrderId && isset($_SESSION[$pendingOrderId])) ? $_SESSIO
 </div>
 </div>
 
+<script src="public/js/address-picker.js"></script>
 <script>
 function changeQty(id, delta) {
     const input = document.getElementById('qty_' + id);
     const val = parseInt(input.value) + delta;
     input.value = val < 0 ? 0 : val;
 }
+
+/* Initialize address picker for cart */
+document.addEventListener('DOMContentLoaded', function(){
+    const hiddenEl = document.getElementById('cart_full_addr');
+    if (!hiddenEl) return;
+    
+    initAddressPicker({
+        streetId:       'cart_street',
+        provinceId:     'cart_province',
+        districtId:     'cart_district',
+        wardId:         'cart_ward',
+        hiddenId:       'cart_full_addr',
+        provinceCodeId: 'cart_province_code',
+        wardCodeId:     'cart_ward_code',
+        streetPartId:   'cart_street_part',
+        previewId:      'cart_preview',
+        previewTextId:  'cart_preview_text',
+        existingAddress: hiddenEl.value
+    });
+});
 </script>
 
 <?php

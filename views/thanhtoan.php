@@ -326,6 +326,17 @@ ob_start();
             $diachinn = $_SESSION[$ma_don_hang]['diachinn'];
             $ghichunn = $_SESSION[$ma_don_hang]['ghichunn'];
             $tongtien = $_SESSION[$ma_don_hang]['tongtien'];
+
+            // Construct structured address if codes exist
+            $store = new StoreModel();
+            if (!empty($_SESSION[$ma_don_hang]['province_code']) && !empty($_SESSION[$ma_don_hang]['ward_code'])) {
+                $p = $store->getProvinceByCode($_SESSION[$ma_don_hang]['province_code']);
+                $w = $store->getWardByCode($_SESSION[$ma_don_hang]['ward_code']);
+                if ($p && $w) {
+                    $street = $_SESSION[$ma_don_hang]['street_part'] ?? '';
+                    $diachinn = ($street ? $street . ', ' : '') . $w['name'] . ', ' . $p['name'];
+                }
+            }
     ?>
 
             <div class="checkout-wrapper">
@@ -352,6 +363,14 @@ ob_start();
                             <div class="summary-item">
                                 <span class="label">Người nhận</span>
                                 <span class="value"><?=$tennn?></span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Số điện thoại</span>
+                                <span class="value"><?=$sdtnn?></span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Địa chỉ giao hàng</span>
+                                <span class="value"><?=$diachinn?></span>
                             </div>
                             <div class="summary-item total">
                                 <span class="label">Tổng thanh toán</span>

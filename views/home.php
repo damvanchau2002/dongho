@@ -289,17 +289,7 @@ ob_start();
         </div>
         <div class="product-grid" style="margin-bottom: 20px;">
             <?php 
-            if(!empty($spmoinhat)){
-                $limit_new = 8; 
-                $page_new = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-                if ($page_new < 1) $page_new = 1;
-                $total_new = count($spmoinhat);
-                $total_pages_new = ceil($total_new / $limit_new);
-                if ($page_new > $total_pages_new && $total_pages_new > 0) $page_new = $total_pages_new;
-                
-                $offset_new = ($page_new - 1) * $limit_new;
-                $paginated_spmoinhat = array_slice($spmoinhat, $offset_new, $limit_new);
-
+            if(!empty($paginated_spmoinhat)){
                 foreach ($paginated_spmoinhat as $value) {
             ?>
             <a href="index.php?action=chitietsanpham&id=<?=$value['id_sp']; ?>" class="product-card">

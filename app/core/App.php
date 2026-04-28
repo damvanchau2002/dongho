@@ -13,6 +13,8 @@ class App
     private function registerRoutes()
     {
         $this->router->get('/', ['HomeController', 'index']);
+        $this->router->get('/home', ['HomeController', 'index']);
+        $this->router->get('home', ['HomeController', 'index']);
         $this->router->get('/product', ['ProductController', 'index']);
         $this->router->get('/sanpham', ['ProductController', 'index']);
         $this->router->get('/chitietsanpham', ['ProductController', 'detail']);
@@ -92,6 +94,10 @@ class App
         $this->router->post('/xacnhanthanhtoan', ['CheckoutController', 'confirm']);
         $this->router->get('/muahangthanhcong', ['CheckoutController', 'success']);
         $this->router->post('/muahangthanhcong', ['CheckoutController', 'success']);
+        
+        // Location routes
+        $this->router->get('/api/provinces', ['HomeController', 'getProvinces']);
+        $this->router->get('/api/wards', ['HomeController', 'getWards']);
         
         // Momo callbacks
         $this->router->get('/momo_post', ['CheckoutController', 'momo_post']);

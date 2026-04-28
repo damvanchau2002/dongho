@@ -40,7 +40,12 @@ class AuthController extends Controller
                         } elseif ($_SESSION['quyennd'] == 3) {
                             header('Location: index.php?action=shipper');
                         } else {
-                            header('Location: index.php');
+                            $returnUrl = $_POST['return_url'] ?? $_GET['return_url'] ?? 'index.php';
+                            // Basic security check: ensure it's not an external URL
+                            if (strpos($returnUrl, 'http') === 0 || strpos($returnUrl, '//') === 0) {
+                                $returnUrl = 'index.php';
+                            }
+                            header('Location: ' . $returnUrl);
                         }
                         exit;
                     }
@@ -89,7 +94,11 @@ class AuthController extends Controller
                             } elseif ($_SESSION['quyennd'] == 3) {
                                 header('Location: index.php?action=shipper');
                             } else {
-                                header('Location: index.php');
+                                $returnUrl = $_POST['return_url'] ?? $_GET['return_url'] ?? 'index.php';
+                                if (strpos($returnUrl, 'http') === 0 || strpos($returnUrl, '//') === 0) {
+                                    $returnUrl = 'index.php';
+                                }
+                                header('Location: ' . $returnUrl);
                             }
                             exit;
                         } else {
@@ -113,7 +122,11 @@ class AuthController extends Controller
                                 } elseif ($_SESSION['quyennd'] == 3) {
                                     header('Location: index.php?action=shipper');
                                 } else {
-                                    header('Location: index.php');
+                                    $returnUrl = $_POST['return_url'] ?? $_GET['return_url'] ?? 'index.php';
+                                    if (strpos($returnUrl, 'http') === 0 || strpos($returnUrl, '//') === 0) {
+                                        $returnUrl = 'index.php';
+                                    }
+                                    header('Location: ' . $returnUrl);
                                 }
                                 exit;
                             } else {
@@ -156,7 +169,11 @@ class AuthController extends Controller
                     if (!empty($newUser[0]['id_nd'])) {
                         $_SESSION['id_nd'] = $newUser[0]['id_nd'];
                     }
-                    header('Location: index.php');
+                    $returnUrl = $_POST['return_url'] ?? $_GET['return_url'] ?? 'index.php';
+                    if (strpos($returnUrl, 'http') === 0 || strpos($returnUrl, '//') === 0) {
+                        $returnUrl = 'index.php';
+                    }
+                    header('Location: ' . $returnUrl);
                     exit;
                 }
             } else {

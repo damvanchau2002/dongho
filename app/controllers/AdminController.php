@@ -362,9 +362,20 @@ class AdminController extends Controller
             exit;
         }
 
+        // Construct full address from structured parts if available
+        $fullAddress = $order['diachi_nguoinhan'];
+        if (!empty($order['province_code']) && !empty($order['ward_code'])) {
+            $province = $store->getProvinceByCode($order['province_code']);
+            $ward = $store->getWardByCode($order['ward_code']);
+            if ($province && $ward) {
+                $fullAddress = ($order['street_part'] ? $order['street_part'] . ', ' : '') . $ward['name'] . ', ' . $province['name'];
+            }
+        }
+
         $this->renderLegacy('chitietdonhang', [
             'data' => $data,
             'order' => $order,
+            'fullAddress' => $fullAddress,
             'shippers' => $shippers
         ]);
     }

@@ -286,4 +286,20 @@ class StoreModel
         }
         return $this->model->capNhatFlashSale($id, $price, $endDate);
     }
+
+    public function getAllProvinces() {
+        return $this->model->getAllProvinces();
+    }
+
+    public function getWardsByProvince($provinceCode) {
+        return $this->model->getWardsByProvince($provinceCode);
+    }
+
+    public function getProvinceByCode($code) {
+        return $this->model->getProvinceByCode($code);
+    }
+
+    public function getWardByCode($code) {
+        return $this->model->getWardByCode($code);
+    }
 }

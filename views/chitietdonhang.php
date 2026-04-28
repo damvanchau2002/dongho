@@ -10,12 +10,66 @@
     
     <!-- Leaflet CSS for Map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
     
     <style>
-        #shippingMap { height: 400px; width: 100%; border-radius: 10px; margin-top: 20px; display: none; }
+        #shippingMap { height: 450px; width: 100%; border-radius: 15px; margin-top: 20px; display: none; border: 1px solid #ddd; }
+        .leaflet-routing-container { display: none; }
+        
+        .map-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            min-width: 200px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .map-overlay h6 { margin-bottom: 10px; font-weight: 700; color: #333; font-size: 14px; }
+        .map-stat { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px; }
+        .map-stat span:first-child { color: #666; }
+        .map-stat span:last-child { font-weight: 600; color: #000; }
+        
+        .live-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #2ecc71;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+
+        /* Pulse Animation for Shipper */
+        .shipper-icon-container { position: relative; }
+        .shipper-pulse {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: rgba(52, 152, 219, 0.3);
+            border-radius: 50%;
+            animation: pulse-blue 2s infinite;
+        }
+        @keyframes pulse-blue {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+        }
     </style>
     <style>
-        .order-info-box { background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        .order-info-box { background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid #e2e8f0; position: relative; }
         .order-info-box h5 { color: #0f4c81; font-weight: 700; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; }
         .item-img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; }
     </style>
@@ -54,7 +108,7 @@
                             <p><strong>Họ tên:</strong> <?php echo htmlspecialchars($order['ten_nguoinhan']); ?></p>
                             <p><strong>Email:</strong> <?php echo htmlspecialchars($order['email_nguoinhan']); ?></p>
                             <p><strong>Số điện thoại:</strong> <?php echo htmlspecialchars($order['sdt_nguoinhan']); ?></p>
-                            <p><strong>Địa chỉ:</strong> <?php echo htmlspecialchars($order['diachi_nguoinhan']); ?></p>
+                            <p><strong>Địa chỉ:</strong> <?php echo htmlspecialchars($fullAddress ?? $order['diachi_nguoinhan']); ?></p>
                             <p><strong>Ghi chú:</strong> <?php echo htmlspecialchars($order['ghichu_nguoinhan']); ?></p>
                         </div>
                     </div>
@@ -124,7 +178,20 @@
                 <div class="order-info-box" id="mapContainer" style="<?php echo ($order['trang_thai'] == 2 && isset($order['id_shipper']) && $order['id_shipper'] > 0) ? 'display:block;' : 'display:none;'; ?>">
                     <h5><i class="fas fa-map-marked-alt text-primary"></i> Bản đồ theo dõi lộ trình giao hàng</h5>
                     <p class="text-muted small">Đang theo dõi vị trí của Shipper theo thời gian thực.</p>
-                    <div id="shippingMap"></div>
+                    <div style="position: relative;">
+                        <div class="map-overlay" id="mapOverlay" style="display: none;">
+                            <h6><span class="live-indicator"></span> TRỰC TIẾP</h6>
+                            <div class="map-stat">
+                                <span>Khoảng cách:</span>
+                                <span id="mapDist">-- km</span>
+                            </div>
+                            <div class="map-stat">
+                                <span>Thời gian:</span>
+                                <span id="mapTime">-- phút</span>
+                            </div>
+                        </div>
+                        <div id="shippingMap"></div>
+                    </div>
                 </div>
 
                 <div class="order-info-box">
@@ -173,33 +240,40 @@
         });
 
         // Map Tracking Logic
-        <?php if ($order['trang_thai'] == 2 && isset($order['id_shipper']) && $order['id_shipper'] > 0): ?>
+        <?php if ($order['trang_thai'] == 2): ?>
         document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('shippingMap').style.display = 'block';
-            const map = L.map('shippingMap').setView([10.762622, 106.660172], 13); // Default HCMC
+            const mapContainer = document.getElementById('shippingMap');
+            mapContainer.style.display = 'block';
+            
+            const map = L.map('shippingMap', {
+                zoomControl: false
+            }).setView([10.7769, 106.6964], 13);
+            L.control.zoom({ position: 'topright' }).addTo(map);
             
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
 
             let shipperMarker, destMarker, routingControl;
+            let firstLoad = true;
 
-            const shipperIcon = L.icon({
-                iconUrl: 'https://cdn-icons-png.flaticon.com/512/2830/2830305.png', // Delivery icon
-                iconSize: [40, 40],
-                iconAnchor: [20, 40]
+            const shipperIcon = L.divIcon({
+                className: 'shipper-icon-container',
+                html: '<div class="shipper-pulse"></div><img src="https://cdn-icons-png.flaticon.com/512/2830/2830305.png" style="width: 35px; height: 35px; position: relative; z-index: 2;">',
+                iconSize: [35, 35],
+                iconAnchor: [17, 17]
             });
 
             const destIcon = L.icon({
-                iconUrl: 'https://cdn-icons-png.flaticon.com/512/149/149059.png', // Pin icon
+                iconUrl: 'https://cdn-icons-png.flaticon.com/512/149/149059.png',
                 iconSize: [40, 40],
                 iconAnchor: [20, 40]
             });
 
-            const destinationAddress = <?php echo json_encode($order['diachi_nguoinhan']); ?>;
+            const destinationAddress = <?php echo json_encode($fullAddress ?? $order['diachi_nguoinhan']); ?>;
             let destLatLng = null;
 
-            // 1. Geocode Delivery Address (with progressive fallback)
+            // 1. Geocode Delivery Address
             async function geocodeWithFallback(address) {
                 let parts = address.split(',').map(p => p.trim());
                 while (parts.length > 0) {
@@ -211,7 +285,7 @@
                     } catch (e) {
                         console.error("Geocoding API error:", e);
                     }
-                    parts.shift(); // Bỏ phần chi tiết nhất (đầu tiên), thử lại với cấp chung chung hơn (Quận, Tỉnh)
+                    parts.shift();
                 }
                 return null;
             }
@@ -219,13 +293,10 @@
             geocodeWithFallback(destinationAddress).then(result => {
                 if (result) {
                     destLatLng = L.latLng(result.lat, result.lon);
-                    destMarker = L.marker(destLatLng, {icon: destIcon}).addTo(map).bindPopup("<b>Điểm giao hàng:</b><br>" + destinationAddress).openPopup();
-                    map.setView(destLatLng, 13);
-                } else {
-                    alert("Hệ thống bản đồ không thể định vị được Tỉnh/Thành phố trong địa chỉ: " + destinationAddress + "\n(Bản đồ sẽ chỉ hiện vị trí Shipper)");
+                    destMarker = L.marker(destLatLng, {icon: destIcon}).addTo(map).bindPopup("<b>Điểm giao hàng:</b><br>" + destinationAddress);
                 }
-                updateShipperLocation(); // Initial fetch
-                setInterval(updateShipperLocation, 10000); // Poll every 10s
+                updateShipperLocation();
+                setInterval(updateShipperLocation, 10000);
             });
 
             // 2. Fetch Shipper Location
@@ -239,27 +310,45 @@
                             if (shipperMarker) {
                                 shipperMarker.setLatLng(shipperLatLng);
                             } else {
-                                shipperMarker = L.marker(shipperLatLng, {icon: shipperIcon}).addTo(map).bindPopup("<b>Shipper</b>");
-                                if(!destLatLng) map.setView(shipperLatLng, 15);
+                                shipperMarker = L.marker(shipperLatLng, {icon: shipperIcon}).addTo(map).bindPopup("<b>Vị trí Shipper</b>");
                             }
 
                             if (destLatLng) {
                                 if (routingControl) {
-                                    routingControl.setLatLngs([shipperLatLng, destLatLng]);
+                                    routingControl.setWaypoints([shipperLatLng, destLatLng]);
                                 } else {
-                                    routingControl = L.polyline([shipperLatLng, destLatLng], {
-                                        color: '#e74c3c',
-                                        weight: 6,
-                                        dashArray: '10, 10',
-                                        opacity: 0.8
+                                    routingControl = L.Routing.control({
+                                        waypoints: [shipperLatLng, destLatLng],
+                                        routeWhileDragging: false,
+                                        addWaypoints: false,
+                                        draggableWaypoints: false,
+                                        showAlternatives: false,
+                                        fitSelectedRoutes: false,
+                                        createMarker: function() { return null; },
+                                        lineOptions: {
+                                            styles: [{ color: '#3498db', opacity: 0.8, weight: 6 }]
+                                        }
                                     }).addTo(map);
-                                    
-                                    // Zoom to fit both markers
-                                    map.fitBounds(routingControl.getBounds(), {padding: [50, 50]});
+
+                                    routingControl.on('routesfound', function(e) {
+                                        const summary = e.routes[0].summary;
+                                        document.getElementById('mapOverlay').style.display = 'block';
+                                        document.getElementById('mapDist').textContent = (summary.totalDistance / 1000).toFixed(2) + ' km';
+                                        document.getElementById('mapTime').textContent = Math.round(summary.totalTime / 60) + ' phút';
+                                    });
+                                }
+
+                                if (firstLoad) {
+                                    const group = new L.featureGroup([shipperMarker, destMarker]);
+                                    map.fitBounds(group.getBounds().pad(0.3));
+                                    firstLoad = false;
+                                }
+                            } else {
+                                if (firstLoad) {
+                                    map.setView(shipperLatLng, 15);
+                                    firstLoad = false;
                                 }
                             }
-                        } else {
-                            console.warn("Chưa có tín hiệu GPS từ Shipper");
                         }
                     })
                     .catch(err => console.error("GPS Fetch Error:", err));

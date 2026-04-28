@@ -35,11 +35,19 @@ class CheckoutController extends Controller
 
     public function index()
     {
+        if (!isset($_SESSION['id_nd'])) {
+            header('Location: index.php?action=taikhoan&return_url=' . urlencode('index.php?action=thanhtoan'));
+            exit;
+        }
         $this->renderLegacy('thanhtoan');
     }
 
     public function confirm()
     {
+        if (!isset($_SESSION['id_nd'])) {
+            header('Location: index.php?action=taikhoan');
+            exit;
+        }
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ma_dh = $_POST['ma_dh'] ?? '';
             $pttt  = $_POST['phuongthucthanhtoan'] ?? 'COD';
@@ -73,6 +81,23 @@ class CheckoutController extends Controller
 
                 // ── Gửi email xác nhận đặt hàng ──
                 $orderData = $_SESSION['last_order'];
+
+                // Reconstruct full address for email if structured data exists
+                $store = new StoreModel();
+                if (!empty($orderData['province_code']) && !empty($orderData['ward_code'])) {
+                    $p = $store->getProvinceByCode($orderData['province_code']);
+                    $w = $store->getWardByCode($orderData['ward_code']);
+                    if ($p && $w) {
+                        $street = $orderData['street_part'] ?? '';
+                        $orderData['diachinn'] = ($street ? $street . ', ' : '') . $w['name'] . ', ' . $p['name'];
+                    } else {
+                        // Fallback or validation error if codes are invalid
+                        $error = "Thông tin địa chỉ (Tỉnh/Xã) không hợp lệ.";
+                        header('Location: index.php?action=thanhtoan&error=' . urlencode($error));
+                        exit;
+                    }
+                }
+
                 $toEmail   = $orderData['emailnn'] ?? '';
                 $toName    = $orderData['tennn']   ?? '';
                 if (!empty($toEmail)) {
@@ -196,6 +221,22 @@ class CheckoutController extends Controller
 
                 // ── Gửi email xác nhận đặt hàng (Momo) ──
                 $orderData = $_SESSION['last_order'];
+
+                // Reconstruct full address for email if structured data exists
+                $store = new StoreModel();
+                if (!empty($orderData['province_code']) && !empty($orderData['ward_code'])) {
+                    $p = $store->getProvinceByCode($orderData['province_code']);
+                    $w = $store->getWardByCode($orderData['ward_code']);
+                    if ($p && $w) {
+                        $street = $orderData['street_part'] ?? '';
+                        $orderData['diachinn'] = ($street ? $street . ', ' : '') . $w['name'] . ', ' . $p['name'];
+                    } else {
+                        // Nếu mã không hợp lệ, ghi log hoặc dùng địa chỉ cũ làm fallback
+                        // Ở bước momo_post, chúng ta thường không chặn nữa vì tiền đã thanh toán
+                        error_log("Momo Post: Invalid location codes for Order #$ma_dh");
+                    }
+                }
+
                 $toEmail   = $orderData['emailnn'] ?? '';
                 $toName    = $orderData['tennn']   ?? '';
                 if (!empty($toEmail)) {

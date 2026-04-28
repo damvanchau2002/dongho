@@ -132,6 +132,16 @@ class ShipperController extends Controller
             exit;
         }
 
+        // Construct full address from structured parts if available
+        $fullAddress = $order['diachi_nguoinhan'];
+        if (!empty($order['province_code']) && !empty($order['ward_code'])) {
+            $province = $store->getProvinceByCode($order['province_code']);
+            $ward = $store->getWardByCode($order['ward_code']);
+            if ($province && $ward) {
+                $fullAddress = ($order['street_part'] ? $order['street_part'] . ', ' : '') . $ward['name'] . ', ' . $province['name'];
+            }
+        }
+
         // Get default delivery coordinates (for Vietnam, using center of target area)
         // In production, you'd geocode the address to get actual coordinates
         $deliveryLat = $order['delivery_lat'] ?? 10.7769;  // Default to Saigon
@@ -170,6 +180,7 @@ class ShipperController extends Controller
 
         $this->renderLegacy('shipper_map', [
             'order' => $order,
+            'fullAddress' => $fullAddress,
             'deliveryLat' => $deliveryLat,
             'deliveryLng' => $deliveryLng
         ]);

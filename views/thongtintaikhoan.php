@@ -6,6 +6,11 @@ ob_start();
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <!-- Leaflet CSS for Map -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+
+<style>
+    .leaflet-routing-container { display: none; }
+</style>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -413,9 +418,29 @@ $isAdmin = isset($user['quyen_nd']) && $user['quyen_nd'] == 1;
             </div>
 
             <?php if ($od['trang_thai'] == 2 && !empty($od['id_shipper'])): ?>
-            <div class="info-box mt-3" style="width:100%; max-width:100%; border:1px solid #e2e8f0; padding:15px; border-radius:10px; background:#f8fafc;">
-                <div class="info-box-title" style="margin-bottom:15px;"><i class="fas fa-map-marked-alt" style="color:#1a4a7a"></i> Theo dõi lộ trình giao hàng trực tiếp</div>
-                <div id="customerShippingMap" style="height: 300px; width: 100%; border-radius: 8px; z-index: 1;"></div>
+            <div class="info-box mt-3" style="width:100%; max-width:100%; border:1px solid #e2e8f0; padding:15px; border-radius:12px; background:#f8fafc; position: relative;">
+                <div class="info-box-title" style="margin-bottom:15px; display: flex; align-items: center; justify-content: space-between;">
+                    <span><i class="fas fa-map-marked-alt" style="color:#1a4a7a"></i> Theo dõi lộ trình trực tiếp</span>
+                    <span style="font-size: 11px; color: #2ecc71; font-weight: 700;"><span class="live-blink"></span> TRỰC TIẾP</span>
+                </div>
+                
+                <div style="position: relative;">
+                    <div id="mapInfoOverlay" style="position: absolute; top: 10px; left: 10px; z-index: 1000; background: rgba(255,255,255,0.9); padding: 8px 12px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); font-size: 12px; display: none;">
+                        <div style="display: flex; gap: 15px;">
+                            <span><i class="fas fa-route" style="color:#1a4a7a"></i> <strong id="mapDist">--</strong> km</span>
+                            <span><i class="fas fa-clock" style="color:#1a4a7a"></i> <strong id="mapTime">--</strong> phút</span>
+                        </div>
+                    </div>
+                    <div id="customerShippingMap" style="height: 350px; width: 100%; border-radius: 10px; z-index: 1; border: 1px solid #e2e8f0;"></div>
+                </div>
+
+                <style>
+                    .live-blink { display: inline-block; width: 8px; height: 8px; background: #2ecc71; border-radius: 50%; margin-right: 5px; animation: blink 1.5s infinite; }
+                    @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+                    .shipper-icon-container { position: relative; }
+                    .shipper-pulse { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 35px; height: 35px; background: rgba(52, 152, 219, 0.3); border-radius: 50%; animation: pulse-blue 2s infinite; }
+                    @keyframes pulse-blue { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; } }
+                </style>
             </div>
             <?php endif; ?>
 
@@ -559,263 +584,8 @@ function checkMatch() {
 </script>
 
 <!-- ===== ADDRESS PICKER SCRIPT ===== -->
+<script src="public/js/address-picker.js"></script>
 <script>
-(function(){
-  var API = 'https://provinces.open-api.vn/api';
-
-  /* ── Normalize Vietnamese text: remove diacritics & common prefixes ── */
-  function normVN(str) {
-    if (!str) return '';
-    // Step 1: replace đ/Đ BEFORE NFD (they are Latin Extended, NFD won't decompose them)
-    var s = str.replace(/[đĐ]/g, function(c){ return c === 'đ' ? 'd' : 'D'; });
-    // Step 2: NFD decompose + strip combining diacritical marks
-    s = s.normalize('NFD').replace(/[\u0300-\u036f\u1dc0-\u1dff\u20d0-\u20ff]/g, '');
-    // Step 3: lowercase, trim, remove dots (for abbreviations like TP., Q., P.)
-    s = s.toLowerCase().trim().replace(/\./g, '');
-    // Step 4: strip common admin-unit prefixes
-    s = s.replace(/^(tinh|thanh pho|tp|quan|huyen|phuong|xa|thi tran|thi xa)\s*/i, '').trim();
-    return s;
-  }
-
-  function fuzzyMatch(a, b) {
-    var na = normVN(a), nb = normVN(b);
-    if (!na || !nb || nb.length < 3) return false; // guard against empty / too-short
-    return na === nb || na.includes(nb) || nb.includes(na);
-  }
-
-  /* ── Fill a <select> and try to pre-select by name ── */
-  function fillSelect(sel, items, labelKey, codeKey, preselectName) {
-    // Remove all options except placeholder
-    while (sel.options.length > 1) sel.remove(1);
-    items.forEach(function(item) {
-      var opt = document.createElement('option');
-      opt.value       = item[codeKey];
-      opt.textContent = item[labelKey];
-      opt.dataset.name = item[labelKey];
-      sel.appendChild(opt);
-    });
-
-    if (preselectName && preselectName.trim()) {
-      // 1st pass: exact normalized match
-      var found = Array.from(sel.options).find(function(o) {
-        return normVN(o.dataset.name) === normVN(preselectName);
-      });
-      // 2nd pass: fuzzy includes match
-      if (!found) {
-        found = Array.from(sel.options).find(function(o) {
-          return fuzzyMatch(o.dataset.name, preselectName);
-        });
-      }
-      if (found) { sel.value = found.value; return found; }
-    }
-    return null;
-  }
-
-  /* ── Assemble the hidden field & preview ── */
-  function rebuildAddr(cfg, provSel, distSel, wardSel) {
-    var street = (document.getElementById(cfg.streetId) || {value:''}).value.trim();
-    var pName  = provSel.selectedIndex > 0 ? (provSel.options[provSel.selectedIndex].dataset.name || '') : '';
-    // dName intentionally excluded — district used only to filter wards, not saved in address
-    var wName  = wardSel.selectedIndex > 0 ? (wardSel.options[wardSel.selectedIndex].dataset.name || '') : '';
-
-    // Final address: Số nhà/đường, Phường/Xã, Tỉnh/Thành phố  (NO Quận/Huyện)
-    var parts = [street, wName, pName].filter(Boolean);
-    var full  = parts.join(', ');
-
-
-    var hidden = document.getElementById(cfg.hiddenId);
-    if (hidden) hidden.value = full;
-
-    var preview     = document.getElementById(cfg.previewId);
-    var previewText = document.getElementById(cfg.previewTextId);
-    if (preview && previewText) {
-      if (full) { previewText.textContent = full; preview.style.display = 'flex'; }
-      else      { preview.style.display = 'none'; }
-    }
-  }
-
-  /* ── Fetch with AbortController timeout ── */
-  function fetchJSON(url, timeoutMs) {
-    timeoutMs = timeoutMs || 8000;
-    var ctrl = new AbortController();
-    var tid  = setTimeout(function(){ ctrl.abort(); }, timeoutMs);
-    return fetch(url, { signal: ctrl.signal })
-      .then(function(r) { clearTimeout(tid); return r.json(); })
-      .catch(function(e) { clearTimeout(tid); throw e; });
-  }
-
-    function setLoading(sel, isLoading) {
-        if (!sel || !sel.options || sel.options.length === 0) return;
-        if (isLoading) {
-            sel.disabled = true;
-            sel.options[0].textContent = 'Dang tai...';
-        }
-    }
-
-    /* ── Public init ── */
-  window.initAddressPicker = function(cfg) {
-    var provSel = document.getElementById(cfg.provinceId);
-    var distSel = document.getElementById(cfg.districtId);
-    var wardSel = document.getElementById(cfg.wardId);
-    if (!provSel || !distSel || !wardSel) return;
-
-    // Store placeholder texts
-    provSel.dataset.placeholder = provSel.options[0] ? provSel.options[0].textContent : '-- Tỉnh / Thành phố --';
-    distSel.dataset.placeholder = distSel.options[0] ? distSel.options[0].textContent : '-- Quận / Huyện --';
-    wardSel.dataset.placeholder = wardSel.options[0] ? wardSel.options[0].textContent : '-- Phường / Xã --';
-
-    /* ── Parse existing address into parts ──
-       New format (3 parts): street, ward, province          → no district
-       Old format (4+ parts): street, ward, district, province → has district
-    */
-    var existing = cfg.existingAddress || '';
-    var preStreet = '', preWard = '', preDist = '', preProv = '';
-    if (existing) {
-      var parts = existing.split(',').map(function(p){ return p.trim(); });
-      if (parts.length >= 4) {
-        // OLD format includes district
-        preProv   = parts[parts.length - 1];
-        preDist   = parts[parts.length - 2];
-        preWard   = parts[parts.length - 3];
-        preStreet = parts.slice(0, parts.length - 3).join(', ');
-      } else if (parts.length === 3) {
-        // NEW format: street, ward, province (no district)
-        preProv   = parts[2];
-        preWard   = parts[1];
-        preStreet = parts[0];
-        preDist   = ''; // unknown — will be resolved via API
-      } else if (parts.length === 2) {
-        preProv = parts[1]; preStreet = parts[0];
-      } else {
-        preStreet = existing;
-      }
-    }
-
-    var streetEl = document.getElementById(cfg.streetId);
-    if (streetEl && !streetEl.value && preStreet) streetEl.value = preStreet;
-    if (streetEl) streetEl.addEventListener('input', function(){ rebuildAddr(cfg, provSel, distSel, wardSel); });
-
-    /* Ward loader */
-    function loadWards(distCode, presel) {
-      wardSel.innerHTML = '<option value="">' + wardSel.dataset.placeholder + '</option>';
-      wardSel.disabled  = true;
-      rebuildAddr(cfg, provSel, distSel, wardSel);
-      if (!distCode) return;
-      setLoading(wardSel, true);
-      fetchJSON(API + '/d/' + distCode + '?depth=2')
-        .then(function(data) {
-          var items = data.wards || [];
-          wardSel.innerHTML = '<option value="">' + wardSel.dataset.placeholder + '</option>';
-          fillSelect(wardSel, items, 'name', 'code', presel);
-          wardSel.disabled = false;
-          rebuildAddr(cfg, provSel, distSel, wardSel);
-        })
-        .catch(function(e) {
-          console.error('loadWards error:', e);
-          wardSel.innerHTML = '<option value="">⚠ Không tải được xã/phường</option>';
-          wardSel.disabled = false;
-        });
-    }
-
-    /* District loader */
-    function loadDistricts(provCode, presel, thenWard) {
-      distSel.innerHTML = '<option value="">' + distSel.dataset.placeholder + '</option>';
-      distSel.disabled  = true;
-      wardSel.innerHTML = '<option value="">' + wardSel.dataset.placeholder + '</option>';
-      wardSel.disabled  = true;
-      rebuildAddr(cfg, provSel, distSel, wardSel);
-      if (!provCode) return;
-      setLoading(distSel, true);
-      fetchJSON(API + '/p/' + provCode + '?depth=2')
-        .then(function(data) {
-          var items = data.districts || [];
-          distSel.innerHTML = '<option value="">' + distSel.dataset.placeholder + '</option>';
-          var found = fillSelect(distSel, items, 'name', 'code', presel);
-          distSel.disabled = false;
-          rebuildAddr(cfg, provSel, distSel, wardSel);
-          if (found && distSel.value && thenWard) {
-            loadWards(distSel.value, thenWard);
-          }
-        })
-        .catch(function(e) {
-          console.error('loadDistricts error:', e);
-          distSel.innerHTML = '<option value="">⚠ Không tải được quận/huyện</option>';
-          distSel.disabled = false;
-        });
-    }
-
-    /* ── resolveWardDistrict: find which district contains wardName (depth=3 API)
-       Used when saved address has NO district (new 3-part format).
-       Calls back with (districtCode, districtName) or (null, null) if not found. */
-    function resolveWardDistrict(provCode, wardName, cb) {
-      fetchJSON(API + '/p/' + provCode + '?depth=3', 12000)
-        .then(function(data) {
-          var districts = data.districts || [];
-          for (var i = 0; i < districts.length; i++) {
-            var wards = districts[i].wards || [];
-            for (var j = 0; j < wards.length; j++) {
-              if (fuzzyMatch(wards[j].name, wardName)) {
-                cb(districts[i].code, districts[i].name);
-                return;
-              }
-            }
-          }
-          cb(null, null); // ward not found in any district
-        })
-        .catch(function() { cb(null, null); });
-    }
-
-    /* Change events */
-    provSel.addEventListener('change', function(){
-      preDist = ''; preWard = '';
-      loadDistricts(provSel.value, '', '');
-    });
-    distSel.addEventListener('change', function(){
-      preWard = '';
-      loadWards(distSel.value, '');
-    });
-    wardSel.addEventListener('change', function(){
-      rebuildAddr(cfg, provSel, distSel, wardSel);
-    });
-
-    /* Bootstrap: load all provinces then cascade pre-selection */
-    setLoading(provSel, true);
-    fetchJSON(API + '/p/')
-      .then(function(provinces) {
-        provSel.innerHTML = '<option value="">' + provSel.dataset.placeholder + '</option>';
-        var found = fillSelect(provSel, provinces, 'name', 'code', preProv);
-        provSel.disabled = false;
-
-        if (!found || !provSel.value) {
-          rebuildAddr(cfg, provSel, distSel, wardSel);
-          return;
-        }
-
-        if (preDist) {
-          // OLD format: district name known → normal cascade
-          loadDistricts(provSel.value, preDist, preWard);
-        } else if (preWard) {
-          // NEW format: no district, but have ward → resolve district via depth=3
-          resolveWardDistrict(provSel.value, preWard, function(distCode, distName) {
-            if (distCode) {
-              loadDistricts(provSel.value, distName, preWard);
-            } else {
-              // Ward not found → just load districts without pre-select
-              loadDistricts(provSel.value, '', '');
-            }
-          });
-        } else {
-          loadDistricts(provSel.value, '', '');
-        }
-      })
-      .catch(function(e) {
-        console.error('loadProvinces error:', e);
-        provSel.innerHTML = '<option value="">⚠ Không tải được tỉnh/thành</option>';
-        provSel.disabled  = false;
-        rebuildAddr(cfg, provSel, distSel, wardSel);
-      });
-    };
-
   /* Auto-init for profile form */
   document.addEventListener('DOMContentLoaded', function(){
     var hiddenEl = document.getElementById('pf_full_addr');
@@ -831,12 +601,12 @@ function checkMatch() {
       existingAddress: hiddenEl.value
     });
   });
-})();
 </script>
 
 <?php if (isset($_GET['view_order']) && $od['trang_thai'] == 2 && !empty($od['id_shipper'])): ?>
 <!-- Scripts for Tracking Map -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -848,13 +618,14 @@ function checkMatch() {
                 attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
 
-            let shipperMarker, destMarker, routeLine, routeOutline;
+            let shipperMarker, destMarker, routingControl;
             let hasFitted = false;
 
-            const shipperIcon = L.icon({
-                iconUrl: 'https://cdn-icons-png.flaticon.com/512/2830/2830305.png',
-                iconSize: [40, 40],
-                iconAnchor: [20, 40]
+            const shipperIcon = L.divIcon({
+                className: 'shipper-icon-container',
+                html: '<div class="shipper-pulse"></div><img src="https://cdn-icons-png.flaticon.com/512/2830/2830305.png" style="width: 35px; height: 35px; position: relative; z-index: 2;">',
+                iconSize: [35, 35],
+                iconAnchor: [17, 17]
             });
 
             const destIcon = L.icon({
@@ -887,7 +658,6 @@ function checkMatch() {
                 if (result) {
                     destLatLng = L.latLng(result.lat, result.lon);
                     destMarker = L.marker(destLatLng, {icon: destIcon}).addTo(map).bindPopup("<b>Điểm nhận hàng của bạn</b>").openPopup();
-                    map.setView(destLatLng, 13);
                 } else {
                     // Báo lỗi cho người dùng nếu Nominatim không tìm thấy toạ độ
                     const errBox = document.createElement("div");
@@ -914,28 +684,44 @@ function checkMatch() {
                             }
 
                             if (destLatLng) {
-                                if (routeLine) {
-                                    routeLine.setLatLngs([shipperLatLng, destLatLng]);
-                                    if (routeOutline) {
-                                        routeOutline.setLatLngs([shipperLatLng, destLatLng]);
-                                    }
+                                if (routingControl) {
+                                    routingControl.setWaypoints([shipperLatLng, destLatLng]);
                                 } else {
-                                    routeOutline = L.polyline([shipperLatLng, destLatLng], {
-                                        color: '#ffffff',
-                                        weight: 14,
-                                        opacity: 0.9
+                                    routingControl = L.Routing.control({
+                                        waypoints: [shipperLatLng, destLatLng],
+                                        routeWhileDragging: false,
+                                        addWaypoints: false,
+                                        draggableWaypoints: false,
+                                        showAlternatives: false,
+                                        fitSelectedRoutes: false,
+                                        createMarker: function() { return null; },
+                                        lineOptions: {
+                                            styles: [
+                                                { color: '#ffffff', opacity: 0.9, weight: 14 },
+                                                { color: '#3498db', opacity: 1, weight: 9 }
+                                            ]
+                                        }
                                     }).addTo(map);
-                                    routeLine = L.polyline([shipperLatLng, destLatLng], {
-                                        color: '#ff7a00',
-                                        weight: 9,
-                                        opacity: 1
-                                    }).addTo(map);
+
+                                    routingControl.on('routesfound', function(e) {
+                                        const summary = e.routes[0].summary;
+                                        const distOverlay = document.getElementById('mapInfoOverlay');
+                                        if (distOverlay) {
+                                            distOverlay.style.display = 'block';
+                                            document.getElementById('mapDist').textContent = (summary.totalDistance / 1000).toFixed(2);
+                                            document.getElementById('mapTime').textContent = Math.round(summary.totalTime / 60);
+                                        }
+                                    });
                                 }
 
                                 if (!hasFitted) {
-                                    map.fitBounds(routeLine.getBounds(), {padding: [50, 50]});
+                                    const group = new L.featureGroup([shipperMarker, destMarker]);
+                                    map.fitBounds(group.getBounds().pad(0.3));
                                     hasFitted = true;
                                 }
+                            } else if (!hasFitted) {
+                                map.setView(shipperLatLng, 15);
+                                hasFitted = true;
                             }
                         } else {
                             console.warn("Chưa có tín hiệu GPS từ Shipper");
