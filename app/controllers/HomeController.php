@@ -77,4 +77,49 @@ class HomeController extends Controller
         echo json_encode($wards);
         exit;
     }
+
+    public function toggleFavorite() {
+        header('Content-Type: application/json');
+        
+        if (!isset($_SESSION['id_nd'])) {
+            echo json_encode(['success' => false, 'message' => 'Bạn cần đăng nhập để thực hiện chức năng này!', 'require_login' => true]);
+            exit;
+        }
+
+        $input = json_decode(file_get_contents('php://input'), true);
+        $id_sp = $input['id_sp'] ?? 0;
+        
+        if (!$id_sp) {
+            echo json_encode(['success' => false, 'message' => 'Dữ liệu không hợp lệ']);
+            exit;
+        }
+
+        $store = new StoreModel();
+        $id_nd = $_SESSION['id_nd'];
+        
+        $is_favorite = $store->kiemTraYeuThich($id_nd, $id_sp);
+        if ($is_favorite) {
+            $store->xoaYeuThich($id_nd, $id_sp);
+            echo json_encode(['success' => true, 'is_favorite' => false, 'message' => 'Đã bỏ thích sản phẩm']);
+        } else {
+            $store->themYeuThich($id_nd, $id_sp);
+            echo json_encode(['success' => true, 'is_favorite' => true, 'message' => 'Đã thêm vào yêu thích']);
+        }
+        exit;
+    }
+
+    public function favoriteList() {
+        if (!isset($_SESSION['id_nd'])) {
+            header("Location: index.php?action=dangnhap");
+            exit;
+        }
+        $store = new StoreModel();
+        $data = $store->categories();
+        $favorites = $store->layDanhSachYeuThich($_SESSION['id_nd']);
+        
+        $this->renderLegacy('sanpham_yeuthich', [
+            'data' => $data,
+            'favorites' => $favorites
+        ]);
+    }
 }

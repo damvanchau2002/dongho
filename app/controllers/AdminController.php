@@ -124,6 +124,7 @@ class AdminController extends Controller
 
             if ($error === null) {
                 $store->createProduct($t, $l, $g, $n, $li, $m, $slt);
+                $_SESSION['toast_success'] = 'Thêm sản phẩm thành công!';
                 header('Location: index.php?action=quantri');
                 exit;
             }
@@ -206,6 +207,7 @@ class AdminController extends Controller
             if ($error === null) {
                 $store->updateProduct($_GET['id_sua'], $t, $l, $g, $n, $li, $m, $slt);
                 $store->updateFlashSale($_GET['id_sua'], $flash_price, $flash_end);
+                $_SESSION['toast_success'] = 'Cập nhật sản phẩm thành công!';
                 header('Location: index.php?action=quantri');
                 exit;
             }
@@ -231,6 +233,7 @@ class AdminController extends Controller
         if ($id > 0) {
             $store = new StoreModel();
             $store->deleteProduct($id);
+            $_SESSION['toast_success'] = 'Xóa sản phẩm thành công!';
         }
 
         header('Location: index.php?action=quantri');
@@ -266,6 +269,7 @@ class AdminController extends Controller
                 $error = 'Vui lòng nhập tên thương hiệu.';
             } else {
                 $store->createCategory($name);
+                $_SESSION['toast_success'] = 'Thêm thương hiệu thành công!';
                 header('Location: index.php?action=quanlyloai');
                 exit;
             }
@@ -300,6 +304,7 @@ class AdminController extends Controller
                 $error = 'Vui lòng nhập tên thương hiệu.';
             } else {
                 $store->updateCategory($_GET['id'], $name);
+                $_SESSION['toast_success'] = 'Cập nhật thương hiệu thành công!';
                 header('Location: index.php?action=quanlyloai');
                 exit;
             }
@@ -325,6 +330,7 @@ class AdminController extends Controller
         if ($id > 0) {
             $store = new StoreModel();
             $store->deleteCategory($id);
+            $_SESSION['toast_success'] = 'Xóa thương hiệu thành công!';
         }
         header('Location: index.php?action=quanlyloai');
         exit;
@@ -413,6 +419,7 @@ class AdminController extends Controller
                     // Đơn hàng vừa lấy ra chưa cập nhật trạng thái mới trong mảng, nên ta truyền status mới vào
                     MailHelper::sendStatusUpdate($order['email_nguoinhan'], $order['ten_nguoinhan'] ?? 'Khách hàng', $order, $status);
                 }
+                $_SESSION['toast_success'] = 'Cập nhật đơn hàng thành công!';
             }
         }
 
@@ -458,6 +465,7 @@ class AdminController extends Controller
             if ($error === null) {
                 $store = new StoreModel();
                 $store->createDiscountCode($code, $loai, $gia_tri, $so_luong, $ngay_het_han);
+                $_SESSION['toast_success'] = 'Thêm mã giảm giá thành công!';
                 header('Location: index.php?action=quanlymagiamgia');
                 exit;
             }
@@ -481,6 +489,7 @@ class AdminController extends Controller
         if ($id > 0) {
             $store = new StoreModel();
             $store->deleteDiscountCode($id);
+            $_SESSION['toast_success'] = 'Xóa mã giảm giá thành công!';
         }
         header('Location: index.php?action=quanlymagiamgia');
         exit;
@@ -518,6 +527,7 @@ class AdminController extends Controller
 
             $store = new StoreModel();
             $store->updateUserRole($id, $role);
+            $_SESSION['toast_success'] = 'Cập nhật quyền thành công!';
         }
 
         header('Location: index.php?action=quanlynguoidung');
@@ -544,6 +554,7 @@ class AdminController extends Controller
 
             $store = new StoreModel();
             $store->deleteUser($id);
+            $_SESSION['toast_success'] = 'Xóa người dùng thành công!';
         }
 
         header('Location: index.php?action=quanlynguoidung');
@@ -594,6 +605,7 @@ class AdminController extends Controller
 
             if ($hinh_anh) {
                 $bannerModel->insertBanner($hinh_anh, $link, $vi_tri, $trang_thai);
+                $_SESSION['toast_success'] = 'Thêm banner thành công!';
                 header('Location: index.php?action=quanlybanner');
                 exit;
             } else {
@@ -642,6 +654,7 @@ class AdminController extends Controller
             }
 
             $bannerModel->updateBanner($id, $hinh_anh, $link, $vi_tri, $trang_thai);
+            $_SESSION['toast_success'] = 'Cập nhật banner thành công!';
             header('Location: index.php?action=quanlybanner');
             exit;
         }
@@ -664,6 +677,7 @@ class AdminController extends Controller
             require_once BASE_PATH . '/models/BannerModel.php';
             $bannerModel = new BannerModel();
             $bannerModel->deleteBanner($id);
+            $_SESSION['toast_success'] = 'Xóa banner thành công!';
         }
         header('Location: index.php?action=quanlybanner');
         exit;

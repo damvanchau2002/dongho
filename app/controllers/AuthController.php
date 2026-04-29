@@ -34,6 +34,7 @@ class AuthController extends Controller
                         $_SESSION['tennd'] = $username;
                         $_SESSION['id_nd'] = $userData[0]['id_nd'];
                         $_SESSION['quyennd'] = $userData[0]['quyen_nd'];
+                        $_SESSION['avatar'] = $userData[0]['avatar'] ?? null;
                         
                         if ($_SESSION['quyennd'] == 1) {
                             header('Location: index.php?action=quantri');
@@ -87,6 +88,7 @@ class AuthController extends Controller
                             $_SESSION['tennd'] = $userData[0]['ten_nd'];
                             $_SESSION['id_nd'] = $userData[0]['id_nd'];
                             $_SESSION['quyennd'] = $userData[0]['quyen_nd'];
+                            $_SESSION['avatar'] = $userData[0]['avatar'] ?? null;
                             $_SESSION['success'] = "Đăng nhập bằng Google thành công!";
                             
                             if ($_SESSION['quyennd'] == 1) {
@@ -115,6 +117,7 @@ class AuthController extends Controller
                                 $_SESSION['tennd'] = $newUserData[0]['ten_nd'];
                                 $_SESSION['id_nd'] = $newUserData[0]['id_nd'];
                                 $_SESSION['quyennd'] = $newUserData[0]['quyen_nd'];
+                                $_SESSION['avatar'] = $newUserData[0]['avatar'] ?? null;
                                 $_SESSION['success'] = "Đăng ký và Đăng nhập Google thành công!";
                                 
                                 if ($_SESSION['quyennd'] == 1) {
@@ -168,6 +171,7 @@ class AuthController extends Controller
                     $_SESSION['quyennd'] = 2;
                     if (!empty($newUser[0]['id_nd'])) {
                         $_SESSION['id_nd'] = $newUser[0]['id_nd'];
+                        $_SESSION['avatar'] = $newUser[0]['avatar'] ?? null;
                     }
                     $returnUrl = $_POST['return_url'] ?? $_GET['return_url'] ?? 'index.php';
                     if (strpos($returnUrl, 'http') === 0 || strpos($returnUrl, '//') === 0) {
@@ -208,6 +212,25 @@ class AuthController extends Controller
             if ($id > 0 && !empty($ten)) {
                 if ($store->updateUserProfile($id, $ten, $email, $sdt, $diachi)) {
                     $_SESSION['tennd'] = $ten; // Cập nhật tên trong session
+                    
+                    // Xử lý avatar upload
+                    if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
+                        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                        if (in_array($_FILES['avatar']['type'], $allowedTypes)) {
+                            $fileTmp = $_FILES['avatar']['tmp_name'];
+                            $fileName = time() . '_' . preg_replace('/[^a-zA-Z0-9.\-_]/', '', $_FILES['avatar']['name']);
+                            $destDir = BASE_PATH . '/public/uploads/avatars';
+                            if (!is_dir($destDir)) mkdir($destDir, 0755, true);
+                            
+                            $destPath = $destDir . '/' . $fileName;
+                            if (move_uploaded_file($fileTmp, $destPath)) {
+                                $avatarPath = 'public/uploads/avatars/' . $fileName;
+                                $store->updateUserAvatar($id, $avatarPath);
+                                $_SESSION['avatar'] = $avatarPath;
+                            }
+                        }
+                    }
+                    
                     $_SESSION['profile_success'] = 'Cập nhật thông tin thành công!';
                 } else {
                     $_SESSION['profile_error'] = 'Có lỗi xảy ra. Vui lòng thử lại.';

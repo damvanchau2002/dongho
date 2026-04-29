@@ -69,8 +69,13 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
 
             <?php if ($isLoggedIn): ?>
                 <li class="navbar__user">
-                    <a class="nav-link nav-link__active <?= $isAdmin ? 'active' : ''; ?>" href="#">
-                        Xin chào <?= htmlspecialchars($_SESSION['tennd']); ?>
+                    <a class="nav-link nav-link__active <?= $isAdmin ? 'active' : ''; ?>" href="#" style="display: flex; align-items: center; gap: 8px;">
+                        <?php if (isset($_SESSION['avatar']) && $_SESSION['avatar']): ?>
+                            <img src="<?= $_SESSION['avatar'] ?>" alt="Avatar" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;">
+                        <?php else: ?>
+                            <i class="fas fa-user-circle" style="font-size: 24px; color: #d4af37;"></i>
+                        <?php endif; ?>
+                        <?= htmlspecialchars($_SESSION['tennd']); ?>
                     </a>
                     <ul class="navbar__user-menu">
                         <li class="navbar__user-menu-item">
@@ -85,6 +90,11 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
                                 </a>
                             </li>
                         <?php endif; ?>
+                        <li class="navbar__user-menu-item">
+                            <a href="index.php?action=sanpham_yeuthich">
+                                <i class="fas fa-heart me-2 text-danger"></i> Yêu thích của tôi
+                            </a>
+                        </li>
                         <li class="navbar__user-menu-item">
                             <a href="index.php?action=thongtintaikhoan#don-hang">
                                 <i class="fas fa-shopping-bag me-2"></i> Đơn hàng của tôi
@@ -545,6 +555,47 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
             input.disabled = false;
             input.focus();
         }
+    }
+
+    // Favorite Product Logic
+    function toggleFavorite(id_sp) {
+        if (!isLoggedIn) {
+            alert('Bạn cần đăng nhập để thả tim sản phẩm!');
+            window.location.href = 'index.php?action=taikhoan';
+            return;
+        }
+        
+        fetch('index.php?action=api/favorite/toggle', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ id_sp: id_sp })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Toggle heart icon color
+                const btn = document.getElementById('fav-btn-' + id_sp);
+                if (btn) {
+                    if (data.is_favorite) {
+                        btn.classList.remove('far');
+                        btn.classList.add('fas', 'text-danger');
+                    } else {
+                        btn.classList.remove('fas', 'text-danger');
+                        btn.classList.add('far');
+                    }
+                }
+            } else {
+                alert(data.message || 'Lỗi xử lý yêu thích');
+                if (data.require_login) {
+                    window.location.href = 'index.php?action=taikhoan';
+                }
+            }
+        })
+        .catch(err => {
+            console.error('Lỗi khi thả tim:', err);
+        });
     }
 </script>
 

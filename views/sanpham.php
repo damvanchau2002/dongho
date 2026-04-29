@@ -187,8 +187,15 @@ $paginatedProducts = array_slice($filtered, $offset, $limit);
                     <i class="fas fa-search"></i>
                     <p>Không tìm thấy sản phẩm phù hợp</p>
                 </div>
-            <?php else: foreach ($paginatedProducts as $p): ?>
-                <div class="product-card">
+            <?php else: 
+                $store = new StoreModel();
+                foreach ($paginatedProducts as $p): 
+                    $isFav = false;
+                    if (isset($_SESSION['tennd'])) {
+                        $isFav = $store->kiemTraYeuThich($_SESSION['id_nd'], $p['id_sp']);
+                    }
+            ?>
+                <div class="product-card position-relative">
                     <div class="product-card-img-wrap">
                         <a href="index.php?action=chitietsanpham&id=<?= $p['id_sp'] ?>">
                             <img src="<?= $p['hinhanh_sp'] ?>" alt="<?= htmlspecialchars($p['ten_sp']) ?>" class="product-card-img" loading="lazy">
@@ -200,10 +207,30 @@ $paginatedProducts = array_slice($filtered, $offset, $limit);
                             <h4 class="product-name"><?= htmlspecialchars($p['ten_sp']) ?></h4>
                         </a>
                         <div class="product-rating">
-                            <span class="stars">★★★★☆</span>
-                            <span>(48)</span>
+                            <?php
+                            if (!isset($commentModel)) {
+                                require_once BASE_PATH . '/models/CommentModel.php';
+                                $commentModel = new CommentModel();
+                            }
+                            $stats = $commentModel->getRatingStats($p['id_sp']);
+                            $avg = $stats['average'];
+                            $total = $stats['total'];
+                            $sold = $store->getSoldQuantity($p['id_sp']);
+                            ?>
+                            <span class="stars">
+                                <?php
+                                $full = floor($avg); $half = ($avg-$full)>=0.5?1:0;
+                                for($i=0;$i<$full;$i++) echo '★';
+                                if($half) echo '½';
+                                for($i=$full+$half;$i<5;$i++) echo '☆';
+                                ?>
+                            </span>
+                            <span style="font-size: 11px;">(<?= $total ?>) | Đã bán <?= number_format($sold, 0, ',', '.') ?></span>
                         </div>
-                        <div class="product-price"><?= number_format($p['gia_sp'],0,',','.') ?>đ</div>
+                        <div class="product-price" style="display: flex; justify-content: space-between; align-items: center;">
+                            <span><?= number_format($p['gia_sp'],0,',','.') ?>đ</span>
+                            <i id="fav-btn-<?=$p['id_sp']?>" class="<?= $isFav ? 'fas text-danger' : 'far text-secondary' ?> fa-heart" onclick="toggleFavorite(<?=$p['id_sp']?>); event.preventDefault();" style="cursor: pointer; font-size: 1.2rem;" title="Yêu thích"></i>
+                        </div>
                     </div>
                     <div class="product-card-footer">
                         <a href="index.php?action=chitietsanpham&id=<?= $p['id_sp'] ?>" class="btn-detail">

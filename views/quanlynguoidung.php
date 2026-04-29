@@ -97,7 +97,7 @@
                                         <form action="index.php?action=capnhatquyen" method="POST" class="d-flex align-items-center">
                                             <input type="hidden" name="csrf_token" value="<?= SecurityHelper::csrfToken() ?>">
                                             <input type="hidden" name="id_nd" value="<?= $u['id_nd'] ?>">
-                                            <select name="quyen_nd" class="form-control form-control-sm mr-2" style="width: 130px;" onchange="this.form.submit()">
+                                            <select name="quyen_nd" class="custom-select custom-select-sm mr-2" style="width: 130px; font-family: system-ui, sans-serif;" onchange="this.form.submit()">
                                                 <option value="0" <?= $u['quyen_nd'] == 0 ? 'selected' : '' ?>>Khách hàng</option>
                                                 <option value="3" <?= $u['quyen_nd'] == 3 ? 'selected' : '' ?>>Shipper</option>
                                                 <option value="1" <?= $u['quyen_nd'] == 1 ? 'selected' : '' ?>>Quản trị viên</option>

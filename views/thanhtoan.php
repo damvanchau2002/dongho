@@ -378,7 +378,7 @@ ob_start();
                             </div>
                         </div>
                         
-                        <form action="index.php?action=xacnhanthanhtoan" method="post">
+                        <form action="index.php?action=xacnhanthanhtoan" method="post" onsubmit="return showLoading(this);">
                             <input type="hidden" name="ma_dh" value="<?=$ma_don_hang?>">
                             
                             <div class="payment-methods">
@@ -424,6 +424,17 @@ ob_start();
                             <button type="submit" class="btn-confirm">Xác Nhận Đặt Hàng <i class="fas fa-check-circle"></i></button>
                             <a href="index.php?action=giohang" class="btn-back"><i class="fas fa-arrow-left"></i> Quay lại giỏ hàng</a>
                         </form>
+
+                        <script>
+                        function showLoading(form) {
+                            const btn = form.querySelector('.btn-confirm');
+                            btn.disabled = true;
+                            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+                            btn.style.opacity = '0.8';
+                            btn.style.cursor = 'not-allowed';
+                            return true;
+                        }
+                        </script>
                     </div>
                 </div>
             </div>

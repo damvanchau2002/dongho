@@ -116,7 +116,20 @@ $comments = $commentModel->getCommentsByProductId($id_sp);
         <!-- INFO -->
         <div>
             <span class="pd-badge"><i class="fas fa-certificate"></i> Hàng chính hãng · Mall</span>
-            <h1 class="pd-title"><?= htmlspecialchars($proInfo['ten_sp']) ?></h1>
+            
+            <?php 
+                $store = new StoreModel();
+                $isFavMain = false;
+                if ($loggedIn) {
+                    $isFavMain = $store->kiemTraYeuThich($_SESSION['id_nd'], $proInfo['id_sp']);
+                }
+            ?>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <h1 class="pd-title" style="margin-bottom: 8px;"><?= htmlspecialchars($proInfo['ten_sp']) ?></h1>
+                <button onclick="toggleFavorite(<?=$proInfo['id_sp']?>); event.preventDefault();" class="btn btn-light border shadow-sm" style="border-radius: 50%; width: 45px; height: 45px; color: #dc3545;" title="Yêu thích">
+                    <i id="fav-btn-<?=$proInfo['id_sp']?>" class="<?= $isFavMain ? 'fas text-danger' : 'far' ?> fa-heart" style="font-size: 1.2rem;"></i>
+                </button>
+            </div>
 
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;font-size:14px">
                 <span style="color:#fbbf24;font-size:16px">
@@ -197,12 +210,20 @@ $comments = $commentModel->getCommentsByProductId($id_sp);
     <div class="pd-desc-card">
         <div class="pd-section-title"><i class="fas fa-th-large"></i> Sản phẩm tương tự</div>
         <div class="related-grid">
-        <?php foreach (array_slice((array)$spnn, 0, 8) as $sp): ?>
-            <a href="index.php?action=chitietsanpham&id=<?= $sp['id_sp'] ?>" class="rel-card">
+        <?php foreach (array_slice((array)$spnn, 0, 8) as $sp): 
+                $isFavRel = false;
+                if ($loggedIn) {
+                    $isFavRel = $store->kiemTraYeuThich($_SESSION['id_nd'], $sp['id_sp']);
+                }
+        ?>
+            <a href="index.php?action=chitietsanpham&id=<?= $sp['id_sp'] ?>" class="rel-card position-relative">
                 <img src="<?= $sp['hinhanh_sp'] ?>" alt="<?= htmlspecialchars($sp['ten_sp']) ?>">
                 <div class="rel-card-body">
                     <div class="rel-name"><?= htmlspecialchars($sp['ten_sp']) ?></div>
-                    <div class="rel-price"><?= number_format($sp['gia_sp'],0,',','.') ?>đ</div>
+                    <div class="rel-price" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span><?= number_format($sp['gia_sp'],0,',','.') ?>đ</span>
+                        <i id="fav-btn-<?=$sp['id_sp']?>" class="<?= $isFavRel ? 'fas text-danger' : 'far text-secondary' ?> fa-heart" onclick="toggleFavorite(<?=$sp['id_sp']?>); event.preventDefault();" style="cursor: pointer; font-size: 1.2rem;" title="Yêu thích"></i>
+                    </div>
                 </div>
             </a>
         <?php endforeach; ?>

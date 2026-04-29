@@ -112,6 +112,7 @@ $successOrders = isset($orders) ? count(array_filter($orders, fn($o) => $o['tran
 $username = $user['ten_nd'] ?? ($_SESSION['tennd'] ?? 'U');
 $avatarLetter = mb_strtoupper(mb_substr($username, 0, 1));
 $isAdmin = isset($user['quyen_nd']) && $user['quyen_nd'] == 1;
+$avatarPath = $user['avatar'] ?? ($_SESSION['avatar'] ?? null);
 ?>
 
 <div class="acc-wrap">
@@ -119,7 +120,14 @@ $isAdmin = isset($user['quyen_nd']) && $user['quyen_nd'] == 1;
 
     <!-- SIDEBAR -->
     <div class="acc-sidebar">
-        <div class="acc-avatar"><?= $avatarLetter ?></div>
+        <div class="acc-avatar" style="overflow: hidden; cursor: pointer; position: relative;" onclick="document.getElementById('avatarInput').click();" title="Nhấn để đổi ảnh đại diện">
+            <?php if ($avatarPath): ?>
+                <img id="avatarPreviewSidebar" src="<?= $avatarPath ?>" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+            <?php else: ?>
+                <span id="avatarLetterSidebar"><?= $avatarLetter ?></span>
+            <?php endif; ?>
+            <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.5); font-size: 10px; color: white; text-align: center; padding: 2px 0;">Đổi ảnh</div>
+        </div>
         <div class="acc-username"><?= htmlspecialchars($username) ?></div>
         <div class="acc-role"><?= $isAdmin ? '⚡ Quản trị viên' : '👤 Khách hàng' ?></div>
 
@@ -181,9 +189,10 @@ $isAdmin = isset($user['quyen_nd']) && $user['quyen_nd'] == 1;
             <div class="alert-profile alert-error-p"><i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars($_SESSION['profile_error']); unset($_SESSION['profile_error']); ?></div>
             <?php endif; ?>
 
-            <form method="POST" action="index.php?action=thongtintaikhoan">
+            <form method="POST" action="index.php?action=thongtintaikhoan" enctype="multipart/form-data">
                 <input type="hidden" name="csrf_token" value="<?= SecurityHelper::csrfToken() ?>">
                 <input type="hidden" name="capnhat_thongtin" value="1">
+                <input type="file" name="avatar" id="avatarInput" style="display: none;" accept="image/*" onchange="previewAvatar(this)">
 
                 <div class="pf-row2">
                     <div>
@@ -601,6 +610,35 @@ function checkMatch() {
       existingAddress: hiddenEl.value
     });
   });
+</script>
+
+</script>
+<script>
+  function previewAvatar(input) {
+      if (input.files && input.files[0]) {
+          var reader = new FileReader();
+          reader.onload = function(e) {
+              var sidebarAvatar = document.querySelector('.acc-avatar');
+              if (sidebarAvatar) {
+                  // Xóa chữ nếu đang có, thay bằng hình
+                  var letterSpan = document.getElementById('avatarLetterSidebar');
+                  if (letterSpan) letterSpan.style.display = 'none';
+                  
+                  var imgPreview = document.getElementById('avatarPreviewSidebar');
+                  if (!imgPreview) {
+                      imgPreview = document.createElement('img');
+                      imgPreview.id = 'avatarPreviewSidebar';
+                      imgPreview.style.width = '100%';
+                      imgPreview.style.height = '100%';
+                      imgPreview.style.objectFit = 'cover';
+                      sidebarAvatar.insertBefore(imgPreview, sidebarAvatar.firstChild);
+                  }
+                  imgPreview.src = e.target.result;
+              }
+          }
+          reader.readAsDataURL(input.files[0]);
+      }
+  }
 </script>
 
 <?php if (isset($_GET['view_order']) && $od['trang_thai'] == 2 && !empty($od['id_shipper'])): ?>

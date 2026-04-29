@@ -201,3 +201,26 @@ body {
     text-decoration: none;
     display: inline-block;
 }
+
+/* Fix UI text cutoff for select dropdowns globally */
+select.form-control,
+select.form-control-sm {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    background: #fff url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'%3e%3cpath fill='%23343a40' d='M2 0L0 2h4zm0 5L0 3h4z'/%3e%3c/svg%3e") right 12px center/8px 10px no-repeat !important;
+    padding-right: 30px !important;
+    height: auto !important;
+    min-height: 38px !important;
+    line-height: 1.5 !important;
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+}
+
+select.form-control-sm {
+    min-height: 32px !important;
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+    font-size: 0.875rem !important;
+}

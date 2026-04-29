@@ -145,9 +145,14 @@ class BaseModel
 
 		// Bổ sung GPS và Shipper ID
 		$checkLat = $db->query("SHOW COLUMNS FROM quanlynguoidung LIKE 'lat'");
-		if ($checkLat && $checkLat->num_rows === 0) {
+		if ($checkLat->num_rows == 0) {
 			$db->query("ALTER TABLE quanlynguoidung ADD COLUMN lat DECIMAL(10,8) DEFAULT NULL");
 			$db->query("ALTER TABLE quanlynguoidung ADD COLUMN lng DECIMAL(11,8) DEFAULT NULL");
+		}
+
+		$checkAvatar = $db->query("SHOW COLUMNS FROM quanlynguoidung LIKE 'avatar'");
+		if ($checkAvatar->num_rows == 0) {
+			$db->query("ALTER TABLE quanlynguoidung ADD COLUMN avatar VARCHAR(255) DEFAULT NULL");
 		}
 		
 		$checkIdShipper = $db->query("SHOW COLUMNS FROM donhang LIKE 'id_shipper'");
@@ -633,11 +638,20 @@ class BaseModel
 		$stmt = $this->connect->prepare(
 			"UPDATE quanlynguoidung SET ten_nd = ?, email_nd = ?, sdt_nd = ?, diachi_nd = ? WHERE id_nd = ?"
 		);
-		if (!$stmt) return false;
-		$stmt->bind_param("ssssi", $ten, $email, $sdt, $diachi, $id);
-		$res = $stmt->execute();
-		$stmt->close();
-		return $res;
+		if ($stmt) {
+			$stmt->bind_param("ssssi", $ten, $email, $sdt, $diachi, $id);
+			return $stmt->execute();
+		}
+		return false;
+	}
+
+	public function capNhatAvatar($id, $avatarPath) {
+		$stmt = $this->connect->prepare("UPDATE quanlynguoidung SET avatar = ? WHERE id_nd = ?");
+		if ($stmt) {
+			$stmt->bind_param("si", $avatarPath, $id);
+			return $stmt->execute();
+		}
+		return false;
 	}
 
 	public function layThongKe() {
@@ -1285,6 +1299,48 @@ class BaseModel
         }
         return false;
     }
+
+	public function themYeuThich($id_nd, $id_sp) {
+		$stmt = $this->connect->prepare("INSERT IGNORE INTO sanpham_yeuthich (id_nd, id_sp) VALUES (?, ?)");
+		if (!$stmt) return false;
+		$stmt->bind_param("ii", $id_nd, $id_sp);
+		$res = $stmt->execute();
+		$stmt->close();
+		return $res;
+	}
+
+	public function xoaYeuThich($id_nd, $id_sp) {
+		$stmt = $this->connect->prepare("DELETE FROM sanpham_yeuthich WHERE id_nd = ? AND id_sp = ?");
+		if (!$stmt) return false;
+		$stmt->bind_param("ii", $id_nd, $id_sp);
+		$res = $stmt->execute();
+		$stmt->close();
+		return $res;
+	}
+
+	public function kiemTraYeuThich($id_nd, $id_sp) {
+		$stmt = $this->connect->prepare("SELECT COUNT(*) as c FROM sanpham_yeuthich WHERE id_nd = ? AND id_sp = ?");
+		if (!$stmt) return false;
+		$stmt->bind_param("ii", $id_nd, $id_sp);
+		$stmt->execute();
+		$res = $stmt->get_result()->fetch_assoc();
+		$stmt->close();
+		return $res['c'] > 0;
+	}
+
+	public function layDanhSachYeuThich($id_nd) {
+		$stmt = $this->connect->prepare("SELECT sp.*, y.ngay_them FROM sanpham_yeuthich y JOIN sanpham sp ON y.id_sp = sp.id_sp WHERE y.id_nd = ? ORDER BY y.ngay_them DESC");
+		if (!$stmt) return [];
+		$stmt->bind_param("i", $id_nd);
+		$stmt->execute();
+		$result = $stmt->get_result();
+		$data = [];
+		while ($row = $result->fetch_assoc()) {
+			$data[] = $row;
+		}
+		$stmt->close();
+		return $data;
+	}
 
 }
 ?>

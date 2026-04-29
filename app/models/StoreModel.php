@@ -103,6 +103,27 @@ class StoreModel
         return $this->model->capnhatmatkhau($userId, $passwordHash);
     }
 
+    public function updateUserAvatar($id, $avatarPath)
+    {
+        return $this->model->capNhatAvatar($id, $avatarPath);
+    }
+
+    public function kiemTraYeuThich($id_nd, $id_sp) {
+        return $this->model->kiemTraYeuThich($id_nd, $id_sp);
+    }
+
+    public function themYeuThich($id_nd, $id_sp) {
+        return $this->model->themYeuThich($id_nd, $id_sp);
+    }
+
+    public function xoaYeuThich($id_nd, $id_sp) {
+        return $this->model->xoaYeuThich($id_nd, $id_sp);
+    }
+
+    public function layDanhSachYeuThich($id_nd) {
+        return $this->model->layDanhSachYeuThich($id_nd);
+    }
+
     public function createProduct($ten, $link_ha, $gia, $ngay, $id_l, $mota, $so_luong_ton = 0)
     {
         return $this->model->themsanpham($ten, $link_ha, $gia, $ngay, $id_l, $mota, $so_luong_ton);

@@ -148,7 +148,7 @@ class ShipperController extends Controller
         $deliveryLng = $order['delivery_lng'] ?? 106.6964;
 
         // If coordinates not in DB, use simple geocoding based on district
-        if (!$order['delivery_lat']) {
+        if (empty($order['delivery_lat'])) {
             // Simple mapping of common Vietnamese areas to coordinates
             $areaCoordinates = [
                 'q1' => ['lat' => 10.7769, 'lng' => 106.6964],

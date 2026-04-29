@@ -98,6 +98,10 @@ class App
         // Location routes
         $this->router->get('/api/provinces', ['HomeController', 'getProvinces']);
         $this->router->get('/api/wards', ['HomeController', 'getWards']);
+
+        // Favorite products routes
+        $this->router->post('/api/favorite/toggle', ['HomeController', 'toggleFavorite']);
+        $this->router->get('/sanpham_yeuthich', ['HomeController', 'favoriteList']);
         
         // Momo callbacks
         $this->router->get('/momo_post', ['CheckoutController', 'momo_post']);

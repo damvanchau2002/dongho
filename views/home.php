@@ -254,19 +254,42 @@ ob_start();
         <div class="product-grid">
             <?php 
             if(!empty($spnoibat)){
+                $store = new StoreModel();
                 foreach (array_slice($spnoibat, 0, 8) as $value) {
+                    $isFav = false;
+                    if (isset($_SESSION['tennd'])) {
+                        $isFav = $store->kiemTraYeuThich($_SESSION['id_nd'], $value['id_sp']);
+                    }
             ?>
-            <a href="index.php?action=chitietsanpham&id=<?=$value['id_sp']; ?>" class="product-card">
+            <a href="index.php?action=chitietsanpham&id=<?=$value['id_sp']; ?>" class="product-card position-relative">
                 <div class="product-badge">Top Picks</div>
                 <div class="product-img">
                     <img src="<?php echo $value['hinhanh_sp'];?>" alt="">
                 </div>
                 <div class="product-info">
                     <h4 class="product-title"><?php echo $value['ten_sp'];?></h4>
-                    <div class="product-rating">
-                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+                    <div class="product-rating" style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+                        <?php
+                        if (!isset($commentModel)) {
+                            require_once BASE_PATH . '/models/CommentModel.php';
+                            $commentModel = new CommentModel();
+                        }
+                        $stats = $commentModel->getRatingStats($value['id_sp']);
+                        $avg = $stats['average'];
+                        $total = $stats['total'];
+                        $sold = $store->getSoldQuantity($value['id_sp']);
+                        
+                        $full = floor($avg); $half = ($avg-$full)>=0.5?1:0;
+                        for($i=0;$i<$full;$i++) echo '<i class="fas fa-star"></i>';
+                        if($half) echo '<i class="fas fa-star-half-alt"></i>';
+                        for($i=$full+$half;$i<5;$i++) echo '<i class="far fa-star"></i>';
+                        ?>
+                        <span style="font-size: 11px; color: #64748b; margin-left: 4px;">(<?= $total ?>) | Bán <?= number_format($sold, 0, ',', '.') ?></span>
                     </div>
-                    <div class="product-price"><?php echo number_format($value['gia_sp'], 0, ',', '.');?> ₫</div>
+                    <div class="product-price" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span><?php echo number_format($value['gia_sp'], 0, ',', '.');?> ₫</span>
+                        <i id="fav-btn-<?=$value['id_sp']?>" class="<?= $isFav ? 'fas text-danger' : 'far text-secondary' ?> fa-heart" onclick="toggleFavorite(<?=$value['id_sp']?>); event.preventDefault();" style="cursor: pointer; font-size: 1.2rem;" title="Yêu thích"></i>
+                    </div>
                 </div>
             </a>
             <?php }} else { echo "<p>Đang cập nhật...</p>"; } ?>
@@ -290,19 +313,42 @@ ob_start();
         <div class="product-grid" style="margin-bottom: 20px;">
             <?php 
             if(!empty($paginated_spmoinhat)){
+                $store = new StoreModel();
                 foreach ($paginated_spmoinhat as $value) {
+                    $isFav = false;
+                    if (isset($_SESSION['tennd'])) {
+                        $isFav = $store->kiemTraYeuThich($_SESSION['id_nd'], $value['id_sp']);
+                    }
             ?>
-            <a href="index.php?action=chitietsanpham&id=<?=$value['id_sp']; ?>" class="product-card">
+            <a href="index.php?action=chitietsanpham&id=<?=$value['id_sp']; ?>" class="product-card position-relative">
                 <div class="product-badge" style="background: linear-gradient(135deg, #0f2942, #1a4a7a);">Mới Nhất</div>
                 <div class="product-img">
                     <img src="<?php echo $value['hinhanh_sp'];?>" alt="">
                 </div>
                 <div class="product-info">
                     <h4 class="product-title"><?php echo $value['ten_sp'];?></h4>
-                    <div class="product-rating">
-                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i>
+                    <div class="product-rating" style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+                        <?php
+                        if (!isset($commentModel)) {
+                            require_once BASE_PATH . '/models/CommentModel.php';
+                            $commentModel = new CommentModel();
+                        }
+                        $stats = $commentModel->getRatingStats($value['id_sp']);
+                        $avg = $stats['average'];
+                        $total = $stats['total'];
+                        $sold = $store->getSoldQuantity($value['id_sp']);
+                        
+                        $full = floor($avg); $half = ($avg-$full)>=0.5?1:0;
+                        for($i=0;$i<$full;$i++) echo '<i class="fas fa-star"></i>';
+                        if($half) echo '<i class="fas fa-star-half-alt"></i>';
+                        for($i=$full+$half;$i<5;$i++) echo '<i class="far fa-star"></i>';
+                        ?>
+                        <span style="font-size: 11px; color: #64748b; margin-left: 4px;">(<?= $total ?>) | Bán <?= number_format($sold, 0, ',', '.') ?></span>
                     </div>
-                    <div class="product-price"><?php echo number_format($value['gia_sp'], 0, ',', '.');?> ₫</div>
+                    <div class="product-price" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span><?php echo number_format($value['gia_sp'], 0, ',', '.');?> ₫</span>
+                        <i id="fav-btn-<?=$value['id_sp']?>" class="<?= $isFav ? 'fas text-danger' : 'far text-secondary' ?> fa-heart" onclick="toggleFavorite(<?=$value['id_sp']?>); event.preventDefault();" style="cursor: pointer; font-size: 1.2rem;" title="Yêu thích"></i>
+                    </div>
                 </div>
             </a>
             <?php }} else { echo "<p>Đang cập nhật...</p>"; } ?>
