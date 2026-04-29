@@ -234,6 +234,19 @@ class BaseModel
                 FOREIGN KEY (user_id) REFERENCES quanlynguoidung(id_nd) ON DELETE CASCADE
             )
         ");
+
+        // Bảng Vòng Quay May Mắn (Lucky Wheel)
+        $db->query("
+            CREATE TABLE IF NOT EXISTS vongquay_lichsu (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                id_nd INT NOT NULL,
+                ngay_quay DATE NOT NULL,
+                phan_thuong VARCHAR(255) NOT NULL,
+                ma_code VARCHAR(50) NULL,
+                thoi_gian DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (id_nd) REFERENCES quanlynguoidung(id_nd) ON DELETE CASCADE
+            )
+        ");
     }
 
 	public function getAllProvinces() {
@@ -1340,6 +1353,60 @@ class BaseModel
 		}
 		$stmt->close();
 		return $data;
+	}
+
+	// --- LUCKY WHEEL (VÒNG QUAY MAY MẮN) ---
+	public function kiemTraLuotQuay($id_nd) {
+		$stmt = $this->connect->prepare("SELECT id FROM vongquay_lichsu WHERE id_nd = ? AND ngay_quay = CURDATE()");
+		if ($stmt) {
+			$stmt->bind_param("i", $id_nd);
+			$stmt->execute();
+			$result = $stmt->get_result();
+			return $result->num_rows > 0 ? false : true; // false: đã quay rồi, true: chưa quay
+		}
+		return false;
+	}
+
+	public function luuKetQuaVongQuay($id_nd, $phan_thuong, $ma_code) {
+		$stmt = $this->connect->prepare("INSERT INTO vongquay_lichsu (id_nd, ngay_quay, phan_thuong, ma_code) VALUES (?, CURDATE(), ?, ?)");
+		if ($stmt) {
+			$stmt->bind_param("iss", $id_nd, $phan_thuong, $ma_code);
+			return $stmt->execute();
+		}
+		return false;
+	}
+
+	public function layLichSuVongQuay($id_nd) {
+		$stmt = $this->connect->prepare("SELECT * FROM vongquay_lichsu WHERE id_nd = ? ORDER BY thoi_gian DESC");
+		if ($stmt) {
+			$stmt->bind_param("i", $id_nd);
+			$stmt->execute();
+			$res = $stmt->get_result();
+			$data = [];
+			while ($row = $res->fetch_assoc()) {
+				$data[] = $row;
+			}
+			return $data;
+		}
+		return [];
+	}
+
+	public function taoMaGiamGiaTuDong($loai, $gia_tri) {
+		$prefix = $loai === 'percentage' ? 'SALE' : 'GIFT';
+		$random = strtoupper(substr(md5(uniqid(rand(), true)), 0, 6));
+		$ma_code = $prefix . $random;
+		
+		$so_luong = 1;
+		$ngay_het_han = date('Y-m-d', strtotime('+7 days'));
+
+		$stmt = $this->connect->prepare("INSERT INTO ma_giam_gia (ma_code, loai, gia_tri, so_luong, ngay_het_han) VALUES (?, ?, ?, ?, ?)");
+		if ($stmt) {
+			$stmt->bind_param("ssdis", $ma_code, $loai, $gia_tri, $so_luong, $ngay_het_han);
+			if ($stmt->execute()) {
+				return $ma_code;
+			}
+		}
+		return null;
 	}
 
 }

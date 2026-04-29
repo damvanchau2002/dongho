@@ -108,6 +108,23 @@ class StoreModel
         return $this->model->capNhatAvatar($id, $avatarPath);
     }
 
+    // --- LUCKY WHEEL ---
+    public function kiemTraLuotQuay($id_nd) {
+        return $this->model->kiemTraLuotQuay($id_nd);
+    }
+
+    public function luuKetQuaVongQuay($id_nd, $phan_thuong, $ma_code) {
+        return $this->model->luuKetQuaVongQuay($id_nd, $phan_thuong, $ma_code);
+    }
+
+    public function layLichSuVongQuay($id_nd) {
+        return $this->model->layLichSuVongQuay($id_nd);
+    }
+
+    public function taoMaGiamGiaTuDong($loai, $gia_tri) {
+        return $this->model->taoMaGiamGiaTuDong($loai, $gia_tri);
+    }
+
     public function kiemTraYeuThich($id_nd, $id_sp) {
         return $this->model->kiemTraYeuThich($id_nd, $id_sp);
     }

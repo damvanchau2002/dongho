@@ -122,4 +122,75 @@ class HomeController extends Controller
             'favorites' => $favorites
         ]);
     }
+
+    public function vongquay() {
+        if (!isset($_SESSION['id_nd'])) {
+            header("Location: index.php?action=dangnhap&return_url=" . urlencode('index.php?action=vongquay'));
+            exit;
+        }
+        $store = new StoreModel();
+        $data = $store->categories();
+        $id_nd = $_SESSION['id_nd'];
+        $canSpin = $store->kiemTraLuotQuay($id_nd);
+        $lichSu = $store->layLichSuVongQuay($id_nd);
+
+        $this->renderLegacy('vongquay', [
+            'data'    => $data,
+            'canSpin' => $canSpin,
+            'lichSu'  => $lichSu,
+        ]);
+    }
+
+    public function spinWheel() {
+        header('Content-Type: application/json');
+
+        if (!isset($_SESSION['id_nd'])) {
+            echo json_encode(['success' => false, 'message' => 'Bạn cần đăng nhập!']);
+            exit;
+        }
+
+        $store = new StoreModel();
+        $id_nd = $_SESSION['id_nd'];
+
+        if (!$store->kiemTraLuotQuay($id_nd)) {
+            echo json_encode(['success' => false, 'message' => 'Bạn đã quay hôm nay rồi! Hãy quay lại vào ngày mai nhé 😊']);
+            exit;
+        }
+
+        // 6 ô: index, label, loai, gia_tri, xac_suat
+        $prizes = [
+            ['index' => 0, 'label' => 'Chúc bạn may mắn lần sau', 'loai' => null,         'gia_tri' => 0,      'xac_suat' => 40],
+            ['index' => 1, 'label' => 'Giảm 5%',                   'loai' => 'percentage', 'gia_tri' => 5,      'xac_suat' => 28],
+            ['index' => 2, 'label' => 'Giảm 10%',                  'loai' => 'percentage', 'gia_tri' => 10,     'xac_suat' => 17],
+            ['index' => 3, 'label' => 'Giảm 50.000đ',              'loai' => 'fixed',      'gia_tri' => 50000,  'xac_suat' => 10],
+            ['index' => 4, 'label' => 'Giảm 15%',                  'loai' => 'percentage', 'gia_tri' => 15,     'xac_suat' => 4],
+            ['index' => 5, 'label' => 'Giảm 100.000đ',             'loai' => 'fixed',      'gia_tri' => 100000, 'xac_suat' => 1],
+        ];
+
+        $rand = rand(1, 100);
+        $cumulative = 0;
+        $selected = $prizes[0];
+        foreach ($prizes as $prize) {
+            $cumulative += $prize['xac_suat'];
+            if ($rand <= $cumulative) {
+                $selected = $prize;
+                break;
+            }
+        }
+
+        $ma_code = null;
+        if ($selected['loai'] !== null) {
+            $ma_code = $store->taoMaGiamGiaTuDong($selected['loai'], $selected['gia_tri']);
+        }
+
+        $store->luuKetQuaVongQuay($id_nd, $selected['label'], $ma_code);
+
+        echo json_encode([
+            'success'     => true,
+            'prize_index' => $selected['index'],
+            'prize_label' => $selected['label'],
+            'ma_code'     => $ma_code,
+        ]);
+        exit;
+    }
 }

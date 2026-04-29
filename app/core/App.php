@@ -102,6 +102,11 @@ class App
         // Favorite products routes
         $this->router->post('/api/favorite/toggle', ['HomeController', 'toggleFavorite']);
         $this->router->get('/sanpham_yeuthich', ['HomeController', 'favoriteList']);
+
+        // Lucky Wheel routes
+        $this->router->get('/vongquay', ['HomeController', 'vongquay']);
+        $this->router->post('/api/vongquay/spin', ['HomeController', 'spinWheel']);
+        $this->router->post('/api/vongquay_spin', ['HomeController', 'spinWheel']);
         
         // Momo callbacks
         $this->router->get('/momo_post', ['CheckoutController', 'momo_post']);

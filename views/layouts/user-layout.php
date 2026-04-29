@@ -96,6 +96,11 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
                             </a>
                         </li>
                         <li class="navbar__user-menu-item">
+                            <a href="index.php?action=vongquay">
+                                <i class="fas fa-gifts me-2" style="color:#d4af37;"></i> Vòng quay may mắn 🎡
+                            </a>
+                        </li>
+                        <li class="navbar__user-menu-item">
                             <a href="index.php?action=thongtintaikhoan#don-hang">
                                 <i class="fas fa-shopping-bag me-2"></i> Đơn hàng của tôi
                             </a>
